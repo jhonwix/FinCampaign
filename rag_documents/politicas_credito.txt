@@ -1,0 +1,175 @@
+POLÍTICAS DE CRÉDITO AL CONSUMO
+Institución Financiera — Manual Operativo | Versión 7.1 | Enero 2024
+
+==============================================================
+SECCIÓN 1: POLÍTICA GENERAL DE OTORGAMIENTO
+==============================================================
+
+1.1 Principios Rectores del Otorgamiento
+El otorgamiento de crédito se rige por los principios de:
+- Responsabilidad: Solo ofrecer productos que el cliente puede pagar según su DTI real.
+- Transparencia: Divulgar todas las tasas, cargos y condiciones antes del desembolso.
+- No Discriminación: Las decisiones se basan exclusivamente en capacidad de pago e
+  historial crediticio. Está PROHIBIDO considerar raza, género, religión, origen
+  étnico, estado civil o edad (salvo límites mínimos y máximos establecidos por ley).
+- Solvencia Institucional: Mantener provisiones adecuadas según nivel de riesgo de cartera.
+
+1.2 Marco Regulatorio Aplicable
+Todas las políticas cumplen con:
+- Ley de Protección al Consumidor Financiero vigente
+- Normas de la Superintendencia de Banca, Seguros y AFP
+- Estándares internacionales Basel III para gestión de riesgo crediticio
+- Regulación de Tasas de Interés Máximas (actualizada trimestralmente)
+- Ley de Protección de Datos Personales
+
+==============================================================
+SECCIÓN 2: TABLAS DE TASAS DE INTERÉS POR SEGMENTO
+==============================================================
+
+2.1 Préstamos Personales — Tasas Anuales
+SUPER-PRIME:     5.5% – 7.9% anual (mejor tasa disponible en el mercado)
+PRIME:           7.9% – 10.5% anual
+NEAR-PRIME:      9.1% – 14.9% anual
+SUBPRIME:        18.5% – 28.9% anual
+DEEP-SUBPRIME:   No aplica producto estándar. Solo productos de rehabilitación
+                 crediticia previa aprobación especial: 35.0% – 45.0% anual.
+
+2.2 Tarjetas de Crédito — APR Anual
+SUPER-PRIME:     APR 12% – 16% (línea de crédito hasta $25,000)
+PRIME:           APR 16% – 22% (línea de crédito hasta $15,000)
+NEAR-PRIME:      APR 22% – 28% (línea de crédito hasta $8,000)
+SUBPRIME:        APR 29% – 36% (línea de crédito hasta $3,000, más cuota de membresía)
+DEEP-SUBPRIME:   No aplica tarjeta de crédito estándar.
+
+2.3 Préstamos Automotrices — Tasas Anuales
+SUPER-PRIME:     4.9% – 6.5% anual (financiamiento hasta el 90% del valor del vehículo)
+PRIME:           6.5% – 9.0% anual (financiamiento hasta el 85%)
+NEAR-PRIME:      9.0% – 13.5% anual (financiamiento hasta el 75%)
+SUBPRIME:        18.0% – 25.0% anual (financiamiento hasta el 60%, solo vehículos nuevos)
+DEEP-SUBPRIME:   No aplica producto automotriz.
+
+2.4 Tasas para Clientes con Nómina Domiciliada
+Todos los segmentos reciben una reducción adicional de 1.5 puntos porcentuales
+cuando el cliente domicilia su nómina en nuestra institución.
+Ejemplo: NEAR-PRIME con nómina = 9.1% – 13.4% (en lugar de 9.1% – 14.9%)
+
+==============================================================
+SECCIÓN 3: MONTOS MÁXIMOS Y PLAZOS POR SEGMENTO
+==============================================================
+
+3.1 Préstamos Personales
+SUPER-PRIME:   Hasta $50,000 | Plazos: 12 a 84 meses
+PRIME:         Hasta $30,000 | Plazos: 12 a 72 meses
+NEAR-PRIME:    Hasta $15,000 | Plazos: 12 a 60 meses
+SUBPRIME:      Hasta $5,000  | Plazos: 12 a 36 meses
+
+Regla universal: La cuota mensual no puede exceder el 30% del ingreso mensual
+verificado del solicitante, independientemente del segmento.
+
+3.2 Garantías Requeridas por Segmento
+SUPER-PRIME:   Sin garantía para montos menores a $20,000.
+PRIME:         Sin garantía para montos menores a $15,000.
+NEAR-PRIME:    Codeudor solvente requerido para montos superiores a $10,000.
+SUBPRIME:      Codeudor obligatorio para montos superiores a $2,500.
+               Aval o garantía real para montos superiores a $3,500.
+DEEP-SUBPRIME: Garantía real (hipoteca o prenda) mínima de 1.5 veces el monto solicitado.
+
+==============================================================
+SECCIÓN 4: POLÍTICAS DE DIVULGACIÓN Y COMUNICACIÓN EN CAMPAÑAS
+==============================================================
+
+4.1 Información Obligatoria en Toda Campaña de Marketing
+Toda comunicación de campaña de productos crediticios DEBE incluir:
+a) Tasa de interés anual (TIR o TAE) expresada como rango mínimo-máximo.
+b) Plazo mínimo y máximo disponible para el producto.
+c) Al menos un ejemplo representativo con: monto, plazo, cuota mensual estimada.
+d) Leyenda obligatoria: "Tasa sujeta a evaluación crediticia individual.
+   No garantiza aprobación del producto."
+e) Para tarjetas de crédito: APR anual, cuota de membresía si aplica,
+   penalidades por mora y fecha de corte.
+
+4.2 Lenguaje Estrictamente Prohibido en Campañas
+PROHIBIDO utilizar en cualquier canal:
+- "Aprobación garantizada" o variantes ("Aprobado al instante", "Sin requisitos")
+- "Sin consulta de buró" cuando sí se realiza la consulta
+- "Tasa fija para siempre" salvo que esté garantizado contractualmente por la vida del crédito
+- Cualquier término que genere sensación de obligación en el cliente
+- Lenguaje de urgencia artificial: "Solo hoy", "Oferta expira en 2 horas",
+  "Últimas plazas disponibles"
+- Comparaciones con competidores que no puedan ser verificadas objetivamente
+
+4.3 Requisitos Obligatorios por Canal de Comunicación
+
+EMAIL:
+- Obligatorio incluir enlace funcional de baja (unsubscribe) en el pie del mensaje.
+- Identificar claramente al remitente como institución financiera regulada.
+- No usar líneas de asunto engañosas ni que oculten el contenido comercial.
+- Incluir dirección física de la institución y datos de contacto del área de atención.
+
+WHATSAPP / SMS:
+- Solo enviar a números con opt-in explícito documentado en el CRM.
+- Incluir instrucción clara de baja: "Responde BAJA para no recibir más mensajes."
+- Horario permitido: únicamente entre 8:00 AM y 9:00 PM en la zona horaria del cliente.
+- Frecuencia máxima: 2 mensajes por semana por cliente en el mismo canal.
+- Identificar la institución en el primer mensaje de cada conversación.
+
+LLAMADA TELEFÓNICA:
+- Identificar la institución y el nombre del asesor en los primeros 10 segundos.
+- Prohibido llamar en domingos, días festivos nacionales y antes de 8:00 AM o después de 9:00 PM.
+- Respetar lista de No Llamar (DNC) actualizada semanalmente.
+- Registrar el consentimiento o rechazo en el sistema CRM tras cada llamada.
+
+NOTIFICACIÓN EN APP (Push):
+- Solo para clientes con la aplicación instalada y notificaciones activadas.
+- Máximo 1 notificación por semana relacionada con oferta o campaña.
+- No enviar push entre 10:00 PM y 8:00 AM.
+
+==============================================================
+SECCIÓN 5: POLÍTICA DE FAIR LENDING Y NO DISCRIMINACIÓN
+==============================================================
+
+5.1 Criterios Permitidos para Decisiones Crediticias
+Únicamente se permiten criterios objetivos relacionados con capacidad de pago:
+- Puntaje de crédito reportado por buró autorizado
+- Ratio DTI calculado con ingresos verificados documentalmente
+- Historial de pagos en los últimos 24 meses
+- Porcentaje de utilización de crédito vigente
+- Antigüedad en empleo actual (mínimo 6 meses para préstamos personales)
+- Tipo de empleo: formal con contrato vs. independiente (con documentación adicional)
+- Relación deuda total / activos verificables
+
+5.2 Criterios Absolutamente Prohibidos
+La siguiente información NUNCA debe influir en la decisión crediticia:
+- Raza, color de piel, origen nacional o étnico
+- Género, identidad de género o preferencia sexual
+- Estado civil o número de dependientes en el hogar
+- Religión, creencias políticas o afiliación sindical
+- Discapacidad física o mental (salvo impacto directo y documentado en capacidad de pago)
+- Barrio, colonia o código postal de residencia (redlining está estrictamente prohibido)
+- Nombre, apellido o características que sugieran pertenencia a grupo protegido
+
+5.3 Protocolo ante Posible Disparate Impact
+Si el sistema automatizado genera resultados estadísticamente adversos para grupos
+protegidos (tasa de aprobación inferior en > 20% comparado con grupo control),
+se debe activar revisión de disparate impact por el área de cumplimiento antes
+de continuar con campañas masivas del período.
+
+==============================================================
+SECCIÓN 6: POLÍTICA DE REVISIÓN HUMANA OBLIGATORIA
+==============================================================
+
+6.1 Casos que Requieren Revisión Humana Obligatoria
+Los siguientes casos SIEMPRE deben ser revisados por un oficial de crédito:
+- Segmento DEEP-SUBPRIME: revisión por equipo de colocación especial.
+- Montos superiores a $25,000 para cualquier segmento.
+- Clientes con embargo judicial activo detectado en consulta de buró.
+- Inconsistencias entre ingresos declarados y verificados (diferencia > 30%).
+- Solicitudes repetidas rechazadas más de 3 veces en los últimos 6 meses.
+- Cualquier señal de posible fraude de identidad o falsificación de documentos.
+- Clientes con más de 2 reestructuras de deuda en los últimos 5 años.
+
+6.2 Tiempos Máximos de Respuesta en Revisión Humana
+Revisión de rutina: 24 a 48 horas hábiles desde la fecha de solicitud completa.
+Casos complejos (DEEP-SUBPRIME, fraude): máximo 5 días hábiles.
+El cliente debe recibir notificación del estado de su solicitud en cada etapa del proceso.
+Si el plazo vence sin resolución, el caso escala automáticamente al gerente de área.

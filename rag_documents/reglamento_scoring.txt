@@ -1,0 +1,149 @@
+REGLAMENTO DE SCORING Y SEGMENTACIÓN CREDITICIA
+Institución Financiera — Versión 3.2 | Vigente desde enero 2024
+
+==============================================================
+SECCIÓN 1: METODOLOGÍA DE CÁLCULO DTI (Deuda-Ingreso)
+==============================================================
+
+1.1 Definición
+El índice DTI (Debt-to-Income) mide la proporción del ingreso mensual bruto
+destinado al pago de obligaciones financieras vigentes.
+
+Fórmula oficial: DTI = (Deuda Mensual Total / Ingreso Mensual Bruto) * 100
+
+1.2 Componentes de la Deuda Mensual Total
+Se incluyen en el cálculo:
+- Cuotas de préstamos vigentes (personal, hipotecario, automotriz)
+- Pagos mínimos de tarjetas de crédito activas
+- Obligaciones con cooperativas y fondos de ahorro
+- Pensiones alimenticias con resolución judicial
+
+No se incluyen en el cálculo:
+- Servicios públicos (agua, luz, internet, teléfono)
+- Seguros de salud o vida
+- Gastos de transporte, alimentación y vivienda propia
+
+1.3 Rangos DTI y Capacidad de Pago
+DTI 0% – 15%:   Capacidad de pago EXCELENTE. Sin restricciones de producto.
+DTI 16% – 25%:  Capacidad de pago MUY BUENA. Acceso pleno a productos premium.
+DTI 26% – 35%:  Capacidad de pago BUENA. Acceso a productos estándar sin garantía.
+DTI 36% – 45%:  Capacidad de pago LIMITADA. Solo productos con montos reducidos.
+DTI 46% – 50%:  Capacidad de pago MARGINAL. Requiere garantías adicionales o codeudor.
+DTI > 50%:      INELEGIBLE para nuevos productos de crédito. No procesar solicitud.
+
+==============================================================
+SECCIÓN 2: TABLA DE SEGMENTACIÓN CREDITICIA
+==============================================================
+
+2.1 Segmentos y Criterios de Clasificación
+
+SEGMENTO: SUPER-PRIME
+- Puntaje de crédito (buró): 750 – 850
+- DTI máximo permitido: 35%
+- Historial de pagos: 0 pagos tardíos en últimos 24 meses
+- Utilización de crédito: menor al 20%
+- Nivel de riesgo: MUY BAJO
+- Descripción: Clientes de excelencia crediticia. Máxima prioridad en retención
+  y cross-selling. Elegibles para todos los productos del catálogo.
+
+SEGMENTO: PRIME
+- Puntaje de crédito (buró): 700 – 749
+- DTI máximo permitido: 40%
+- Historial de pagos: Máximo 1 pago tardío en últimos 12 meses
+- Utilización de crédito: menor al 30%
+- Nivel de riesgo: BAJO
+- Descripción: Clientes sólidos con manejo responsable del crédito.
+  Elegibles para productos premium con condiciones estándar.
+
+SEGMENTO: NEAR-PRIME
+- Puntaje de crédito (buró): 650 – 699
+- DTI máximo permitido: 45%
+- Historial de pagos: Máximo 3 pagos tardíos en últimos 12 meses
+- Utilización de crédito: menor al 50%
+- Nivel de riesgo: MEDIO
+- Descripción: Clientes con buen potencial de mejora crediticia.
+  Elegibles para productos de mejora y rehabilitación con condiciones ajustadas.
+
+SEGMENTO: SUBPRIME
+- Puntaje de crédito (buró): 600 – 649
+- DTI máximo permitido: 50%
+- Historial de pagos: Entre 4 y 7 pagos tardíos en los últimos 12 meses
+- Utilización de crédito: menor al 75%
+- Nivel de riesgo: ALTO
+- Descripción: Clientes con riesgo elevado. Productos restringidos en monto y plazo.
+  Requieren codeudor solvente para montos superiores a $2,500.
+
+SEGMENTO: DEEP-SUBPRIME
+- Puntaje de crédito (buró): menor a 600
+- DTI: Cualquier valor (se clasifica por puntaje y comportamiento)
+- Historial de pagos: Más de 7 pagos tardíos en últimos 12 meses
+  O morosidad activa en cualquier institución
+- Utilización de crédito: mayor al 75%
+- Nivel de riesgo: CRÍTICO
+- Descripción: INELEGIBLE para productos automatizados.
+  Requiere revisión obligatoria por el equipo de colocación especial.
+  No generar campañas automáticas bajo ninguna circunstancia.
+
+==============================================================
+SECCIÓN 3: REGLAS DE AJUSTE DE PUNTAJE EFECTIVO
+==============================================================
+
+3.1 Factores Positivos (Incrementan el puntaje efectivo)
++ 25 puntos: Ingreso con domiciliación de nómina en nuestra institución
++ 15 puntos: Antigüedad como cliente mayor a 3 años sin incidencias
++ 20 puntos: Saldo promedio en cuenta de ahorro superior a 3 veces la cuota mensual estimada
++ 10 puntos: Sin cuentas en proceso de cobro en últimos 5 años
++ 10 puntos: Relación deuda/activos menor al 40% (documentado)
+
+3.2 Factores Negativos (Reducen el puntaje efectivo)
+- 15 puntos: Consultas de crédito superiores a 5 en los últimos 6 meses
+- 20 puntos: Cuenta corriente en descubierto en los últimos 3 meses
+- Inelegible automático: Embargo judicial activo, independiente del puntaje
+- Inelegible automático: Proceso de quiebra declarado en los últimos 7 años
+- Inelegible automático: Sentencia por fraude financiero en cualquier momento
+
+3.3 Puntaje Efectivo Final
+Puntaje Efectivo = Puntaje Buró + Suma de Factores Positivos - Suma de Factores Negativos
+
+El puntaje efectivo se utiliza para la clasificación de segmento, NO el puntaje de buró original.
+Un cliente con buró 640 (SUBPRIME) con nómina domiciliada y 3+ años de antigüedad
+puede alcanzar puntaje efectivo de 675, clasificando como NEAR-PRIME.
+
+==============================================================
+SECCIÓN 4: CRITERIOS MÍNIMOS DE ELEGIBILIDAD UNIVERSAL
+==============================================================
+
+4.1 Requisitos que aplican a TODOS los segmentos
+- Edad: Mínimo 18 años, máximo 70 años al momento de la solicitud
+- Ingreso mensual mínimo verificable: $1,500 USD equivalente
+- Sin proceso judicial activo relacionado con incumplimiento de deudas financieras
+- Identificación oficial vigente (pasaporte, cédula, licencia de conducir)
+- Residencia verificable en el país de operación (mínimo 6 meses)
+- Empleo o fuente de ingresos activa con mínimo 6 meses de antigüedad
+
+4.2 Elegibilidad por Segmento para Nuevos Productos
+SUPER-PRIME:    Elegible para todos los productos. Sin restricciones adicionales.
+PRIME:          Elegible para todos los productos. Condiciones estándar.
+NEAR-PRIME:     Elegible con condiciones ajustadas (ver Sección 3 de politicas_credito.txt).
+SUBPRIME:       Elegible con restricciones. Codeudor requerido para montos > $2,500.
+DEEP-SUBPRIME:  NO elegible para productos automatizados. Revisión humana obligatoria.
+
+==============================================================
+SECCIÓN 5: CASOS ESPECIALES Y EXCEPCIONES
+==============================================================
+
+5.1 Clientes sin Historial Crediticio (Score = 0 o sin registro en buró)
+- Clasificar temporalmente como NEAR-PRIME
+- Requerir documentación de ingresos adicional (últimos 6 meses de estados de cuenta)
+- Limitar monto inicial al 50% del máximo del segmento
+- Revisar elegibilidad después de 12 meses de comportamiento con la institución
+
+5.2 Clientes con Ingresos Variables (Independientes, Freelancers)
+- Promediar ingresos de los últimos 12 meses (no usar el mes más alto)
+- Aplicar factor de reducción del 15% al DTI calculado (mayor conservadurismo)
+- Requerir declaración de impuestos del último año fiscal como documentación adicional
+
+5.3 Clientes Recién Jubilados
+- Usar ingreso de jubilación como base del DTI
+- Si el score en buró es bajo por inactividad reciente, aplicar ajuste manual
+- Máximo 60% del monto del segmento para evitar sobreendeudamiento
