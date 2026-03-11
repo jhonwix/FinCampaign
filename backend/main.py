@@ -20,11 +20,20 @@ from db.queries import (
     list_customers,
     save_campaign_result,
     get_results_by_customer,
+    create_campaign,
+    get_campaign_by_id,
+    list_campaigns,
+    update_campaign_status,
+    update_campaign_stats,
+    get_campaign_results,
 )
 from models.schemas import (
     AnalysisResponse,
     BatchRequest,
     BatchResponse,
+    CampaignCreate,
+    CampaignResponse,
+    CampaignRunResponse,
     CustomerProfile,
     DocumentListResponse,
     HealthResponse,
@@ -265,6 +274,223 @@ async def upload_document(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Upload failed: {exc}") from exc
     finally:
         os.unlink(tmp_path)
+
+
+# ── Campaign Endpoints ─────────────────────────────────────────────────────────
+
+# Segment label → credit score range mapping
+_SEGMENT_RANGES: dict[str, tuple[int, int]] = {
+    "SUPER-PRIME":  (740, 850),
+    "PRIME":        (670, 739),
+    "NEAR-PRIME":   (620, 669),
+    "SUBPRIME":     (580, 619),
+    "DEEP-SUBPRIME":(300, 579),
+}
+
+
+def _campaign_row_to_response(row: dict) -> dict:
+    """Serialize asyncpg row to CampaignResponse-compatible dict."""
+    import json as _json
+    r = dict(row)
+    # JSONB comes back as a string from asyncpg in some versions
+    if isinstance(r.get("target_segments"), str):
+        r["target_segments"] = _json.loads(r["target_segments"])
+    if r.get("created_at"):
+        r["created_at"] = r["created_at"].isoformat()
+    if r.get("last_run_at"):
+        r["last_run_at"] = r["last_run_at"].isoformat()
+    # Cast Decimal fields to float so Pydantic is happy
+    for field in ("min_monthly_income", "max_dti", "max_credit_utilization",
+                  "rate_min", "rate_max", "max_amount"):
+        if r.get(field) is not None:
+            r[field] = float(r[field])
+    return r
+
+
+@app.get("/api/campaigns", response_model=list[CampaignResponse])
+async def list_campaigns_endpoint(limit: int = 100, offset: int = 0):
+    """List all campaigns."""
+    try:
+        rows = await list_campaigns(limit=limit, offset=offset)
+        return [_campaign_row_to_response(r) for r in rows]
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"DB error: {exc}") from exc
+
+
+@app.post("/api/campaigns", response_model=CampaignResponse, status_code=201)
+async def create_campaign_endpoint(body: CampaignCreate):
+    """Create a new campaign definition."""
+    try:
+        campaign_id = await create_campaign(body.model_dump())
+        row = await get_campaign_by_id(campaign_id)
+        return _campaign_row_to_response(row)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"DB error: {exc}") from exc
+
+
+@app.get("/api/campaigns/{campaign_id}", response_model=CampaignResponse)
+async def get_campaign_endpoint(campaign_id: int):
+    """Get a campaign by id (includes qualifying_count in the response)."""
+    row = await get_campaign_by_id(campaign_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail=f"Campaign {campaign_id} not found")
+    return _campaign_row_to_response(row)
+
+
+@app.post("/api/campaigns/{campaign_id}/run", response_model=CampaignRunResponse)
+async def run_campaign(campaign_id: int):
+    """
+    Execute the 3-agent pipeline against all qualifying customers.
+
+    Filters applied locally:
+      - credit_score BETWEEN min/max
+      - monthly_income >= min
+      - (monthly_debt/monthly_income*100) <= max_dti
+      - late_payments <= max
+      - credit_utilization <= max
+      - if target_segments not empty → only matching segments
+    """
+    campaign = await get_campaign_by_id(campaign_id)
+    if campaign is None:
+        raise HTTPException(status_code=404, detail=f"Campaign {campaign_id} not found")
+
+    await update_campaign_status(campaign_id, "RUNNING")
+
+    try:
+        all_customers = await list_customers(limit=10000)
+
+        # Deserialize target_segments
+        import json as _json
+        segments = campaign["target_segments"]
+        if isinstance(segments, str):
+            segments = _json.loads(segments)
+
+        min_score    = int(campaign["min_credit_score"])
+        max_score    = int(campaign["max_credit_score"])
+        min_income   = float(campaign["min_monthly_income"])
+        max_dti      = float(campaign["max_dti"])
+        max_late     = int(campaign["max_late_payments"])
+        max_util     = float(campaign["max_credit_utilization"])
+
+        qualifying = []
+        for c in all_customers:
+            score  = int(c["credit_score"])
+            income = float(c["monthly_income"])
+            debt   = float(c["monthly_debt"])
+            dti    = (debt / income * 100) if income > 0 else 0
+            late   = int(c["late_payments"])
+            util   = float(c["credit_utilization"])
+
+            if not (min_score <= score <= max_score):
+                continue
+            if income < min_income:
+                continue
+            if dti > max_dti:
+                continue
+            if late > max_late:
+                continue
+            if util > max_util:
+                continue
+
+            # Segment filter
+            if segments:
+                seg = next(
+                    (s for s, (lo, hi) in _SEGMENT_RANGES.items() if lo <= score <= hi),
+                    None,
+                )
+                if seg not in segments:
+                    continue
+
+            qualifying.append(c)
+
+        # Override products_of_interest with campaign product_name
+        product_override = campaign["product_name"]
+        profiles = []
+        for c in qualifying:
+            p = {
+                "name":                c["name"],
+                "age":                 c["age"],
+                "monthly_income":      float(c["monthly_income"]),
+                "monthly_debt":        float(c["monthly_debt"]),
+                "credit_score":        c["credit_score"],
+                "late_payments":       c["late_payments"],
+                "credit_utilization":  float(c["credit_utilization"]),
+                "products_of_interest": product_override or c["products_of_interest"],
+            }
+            profiles.append(p)
+
+        ts = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        batch_id = f"CAMP-{campaign_id}-{ts}"
+
+        batch = await orchestrator.analyze_batch(profiles, batch_id=batch_id)
+
+        results: list = batch.get("results", [])
+        errors: list  = batch.get("errors", [])
+
+        # Save each result to campaign_results
+        approved = 0
+        review   = 0
+        for i, res in enumerate(results):
+            customer_id = qualifying[i]["id"]
+            verdict = res.compliance.overall_verdict if hasattr(res, "compliance") else ""
+            if verdict in ("APPROVED", "APPROVED_WITH_WARNINGS"):
+                approved += 1
+            if getattr(getattr(res, "compliance", None), "human_review_required", False):
+                review += 1
+            try:
+                await save_campaign_result(
+                    customer_id=customer_id,
+                    request_id=res.request_id,
+                    risk_assessment=res.risk_assessment.model_dump(),
+                    campaign=res.campaign.model_dump(),
+                    compliance=res.compliance.model_dump(),
+                    gcs_path=res.stored_at,
+                    processing_ms=res.processing_time_ms or 0,
+                    campaign_id=campaign_id,
+                )
+            except Exception as exc:
+                print(f"[Campaign] Failed to save result for customer {customer_id}: {exc}")
+
+        targeted   = len(qualifying)
+        processed  = len(results)
+
+        await update_campaign_stats(campaign_id, targeted, processed, approved, review)
+        await update_campaign_status(campaign_id, "COMPLETED")
+
+        return CampaignRunResponse(
+            campaign_id=campaign_id,
+            batch_id=batch_id,
+            total_targeted=targeted,
+            total_processed=processed,
+            total_approved=approved,
+            total_review=review,
+            results=results,
+            errors=errors,
+        )
+
+    except Exception as exc:
+        # Reset status so the campaign can be re-run
+        try:
+            await update_campaign_status(campaign_id, "DRAFT")
+        except Exception:
+            pass
+        raise HTTPException(status_code=500, detail=f"Campaign run failed: {exc}") from exc
+
+
+@app.get("/api/campaigns/{campaign_id}/results")
+async def get_campaign_results_endpoint(campaign_id: int):
+    """Return campaign result history."""
+    campaign = await get_campaign_by_id(campaign_id)
+    if campaign is None:
+        raise HTTPException(status_code=404, detail=f"Campaign {campaign_id} not found")
+    try:
+        rows = await get_campaign_results(campaign_id)
+        for r in rows:
+            if r.get("processed_at"):
+                r["processed_at"] = r["processed_at"].isoformat()
+        return {"campaign_id": campaign_id, "results": rows, "total": len(rows)}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"DB error: {exc}") from exc
 
 
 if __name__ == "__main__":

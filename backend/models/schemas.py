@@ -97,6 +97,51 @@ class DocumentListResponse(BaseModel):
     datastore_id: str
 
 
+# ── Campaign Models ────────────────────────────────────────────────────────────
+
+class CampaignCreate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
+    type: str = Field(..., pattern="^(HIPOTECARIO|VEHICULOS|CDT|PERSONAL|TARJETA)$")
+    description: str = ""
+    target_segments: list[str] = []
+    min_credit_score: int = Field(300, ge=300, le=850)
+    max_credit_score: int = Field(850, ge=300, le=850)
+    min_monthly_income: float = Field(0, ge=0)
+    max_dti: float = Field(100, ge=0, le=100)
+    max_late_payments: int = Field(10, ge=0)
+    max_credit_utilization: float = Field(100, ge=0, le=100)
+    product_name: str = ""
+    rate_min: float = Field(0, ge=0)
+    rate_max: float = Field(100, ge=0)
+    max_amount: float = Field(0, ge=0)
+    term_months: int = Field(0, ge=0)
+    channel: str = "Email"
+    message_tone: str = "Amigable"
+    cta_text: str = ""
+
+
+class CampaignResponse(CampaignCreate):
+    id: int
+    status: str
+    total_targeted: int
+    total_processed: int
+    total_approved: int
+    total_review: int
+    created_at: str
+    last_run_at: Optional[str] = None
+
+
+class CampaignRunResponse(BaseModel):
+    campaign_id: int
+    batch_id: str
+    total_targeted: int
+    total_processed: int
+    total_approved: int
+    total_review: int
+    results: list[AnalysisResponse]
+    errors: list[dict] = []
+
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 def generate_request_id() -> str:

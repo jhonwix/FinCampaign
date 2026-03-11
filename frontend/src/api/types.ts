@@ -63,3 +63,66 @@ export interface CustomerResult {
   processing_ms: number
   processed_at: string
 }
+
+export type CampaignType = 'HIPOTECARIO' | 'VEHICULOS' | 'CDT' | 'PERSONAL' | 'TARJETA'
+export type CampaignStatus = 'DRAFT' | 'RUNNING' | 'COMPLETED'
+export type SegmentName = 'SUPER-PRIME' | 'PRIME' | 'NEAR-PRIME' | 'SUBPRIME' | 'DEEP-SUBPRIME'
+
+export interface CampaignCreate {
+  name: string
+  type: CampaignType
+  description: string
+  target_segments: SegmentName[]
+  min_credit_score: number
+  max_credit_score: number
+  min_monthly_income: number
+  max_dti: number
+  max_late_payments: number
+  max_credit_utilization: number
+  product_name: string
+  rate_min: number
+  rate_max: number
+  max_amount: number
+  term_months: number
+  channel: string
+  message_tone: string
+  cta_text: string
+}
+
+export interface CampaignRecord extends CampaignCreate {
+  id: number
+  status: CampaignStatus
+  total_targeted: number
+  total_processed: number
+  total_approved: number
+  total_review: number
+  created_at: string
+  last_run_at: string | null
+}
+
+export interface CampaignResultRow {
+  id: number
+  request_id: string
+  customer_id: number
+  customer_name: string
+  segment: string
+  risk_level: string
+  dti: number
+  eligible_for_credit: boolean
+  product_name: string
+  compliance_verdict: string
+  human_review_required: boolean
+  processing_ms: number
+  processed_at: string
+}
+
+export interface CampaignRunResult {
+  campaign_id: number
+  batch_id: string
+  total_targeted: number
+  total_processed: number
+  total_approved: number
+  total_review: number
+  results: AnalysisResult[]
+  errors: Record<string, unknown>[]
+}

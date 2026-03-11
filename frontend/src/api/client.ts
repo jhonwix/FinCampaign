@@ -1,4 +1,16 @@
-import type { AnalysisResult, Customer, CustomerResult } from './types'
+import type {
+  AnalysisResult,
+  Campaign,
+  CampaignCreate,
+  CampaignRecord,
+  CampaignResultRow,
+  CampaignRunResult,
+  Customer,
+  CustomerResult,
+} from './types'
+
+// Re-export so pages can import from one place
+export type { Campaign, CampaignCreate, CampaignRecord, CampaignResultRow, CampaignRunResult }
 
 const BASE = '/api'
 
@@ -25,4 +37,26 @@ export const api = {
 
   health: (): Promise<{ status: string; version: string; timestamp: string }> =>
     request('/health'),
+
+  // Campaign endpoints
+  listCampaigns: (): Promise<CampaignRecord[]> =>
+    request('/campaigns'),
+
+  createCampaign: (body: CampaignCreate): Promise<CampaignRecord> =>
+    request('/campaigns', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
+
+  getCampaign: (id: number): Promise<CampaignRecord> =>
+    request(`/campaigns/${id}`),
+
+  runCampaign: (id: number): Promise<CampaignRunResult> =>
+    request(`/campaigns/${id}/run`, { method: 'POST' }),
+
+  getCampaignResults: (
+    id: number
+  ): Promise<{ campaign_id: number; results: CampaignResultRow[]; total: number }> =>
+    request(`/campaigns/${id}/results`),
 }

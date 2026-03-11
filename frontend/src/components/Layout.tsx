@@ -43,6 +43,16 @@ export function Layout() {
               >
                 Customers
               </button>
+              <button
+                onClick={() => navigate('/campaigns')}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                  location.pathname.startsWith('/campaigns')
+                    ? 'bg-indigo-50 text-indigo-700'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                Campañas
+              </button>
             </nav>
 
             {health && (
