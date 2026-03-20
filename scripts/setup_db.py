@@ -18,6 +18,7 @@ from config import settings
 CREATE_CUSTOMERS = """
 CREATE TABLE IF NOT EXISTS customers (
     id                  SERIAL PRIMARY KEY,
+    id_number           VARCHAR(20)     UNIQUE,
     name                VARCHAR(100)    NOT NULL,
     age                 INTEGER         NOT NULL CHECK (age BETWEEN 18 AND 100),
     monthly_income      NUMERIC(12, 2)  NOT NULL CHECK (monthly_income > 0),
@@ -54,21 +55,22 @@ CREATE TABLE IF NOT EXISTS campaign_results (
 """
 
 SEED_CUSTOMERS = [
+    # id_number, name, age, monthly_income, monthly_debt, credit_score, late_payments, credit_utilization, products_of_interest
     # SUPER-PRIME
-    ("Andrea Torres",      28, 7200.00,  900.00, 760, 0, 15.0, "auto loan"),
-    ("Sofia Ramirez",      35, 9500.00,  800.00, 810, 0, 10.0, "mortgage refinance"),
+    ("1000000001", "Andrea Torres",      28, 7200.00,  900.00, 760, 0, 15.0, "auto loan"),
+    ("1000000002", "Sofia Ramirez",      35, 9500.00,  800.00, 810, 0, 10.0, "mortgage refinance"),
     # PRIME
-    ("Laura Gomez",        31, 5500.00,  800.00, 720, 0, 22.0, "credit card"),
-    ("Roberto Vargas",     42, 6800.00, 1500.00, 710, 1, 28.0, "personal loan"),
+    ("1000000003", "Laura Gomez",        31, 5500.00,  800.00, 720, 0, 22.0, "credit card"),
+    ("1000000004", "Roberto Vargas",     42, 6800.00, 1500.00, 710, 1, 28.0, "personal loan"),
     # NEAR-PRIME
-    ("Carlos Mendoza",     34, 4500.00, 1200.00, 680, 2, 45.0, "personal loan or credit card"),
-    ("Diana Morales",      29, 3800.00,  950.00, 665, 2, 38.0, "credit card"),
-    ("Javier Castillo",    38, 5200.00, 1800.00, 655, 3, 49.0, "personal loan"),
+    ("1000000005", "Carlos Mendoza",     34, 4500.00, 1200.00, 680, 2, 45.0, "personal loan or credit card"),
+    ("1000000006", "Diana Morales",      29, 3800.00,  950.00, 665, 2, 38.0, "credit card"),
+    ("1000000007", "Javier Castillo",    38, 5200.00, 1800.00, 655, 3, 49.0, "personal loan"),
     # SUBPRIME
-    ("Pedro Ruiz",         52, 3200.00, 1400.00, 630, 4, 60.0, "personal loan"),
-    ("Lucia Herrera",      45, 2900.00, 1300.00, 615, 5, 68.0, "secured credit card"),
+    ("1000000008", "Pedro Ruiz",         52, 3200.00, 1400.00, 630, 4, 60.0, "personal loan"),
+    ("1000000009", "Lucia Herrera",      45, 2900.00, 1300.00, 615, 5, 68.0, "secured credit card"),
     # DEEP-SUBPRIME
-    ("Miguel Angel Reyes", 45, 2800.00, 1900.00, 580, 6, 82.0, "personal loan"),
+    ("1000000010", "Miguel Angel Reyes", 45, 2800.00, 1900.00, 580, 6, 82.0, "personal loan"),
 ]
 
 
@@ -106,9 +108,9 @@ async def main():
             await conn.executemany(
                 """
                 INSERT INTO customers
-                    (name, age, monthly_income, monthly_debt, credit_score,
+                    (id_number, name, age, monthly_income, monthly_debt, credit_score,
                      late_payments, credit_utilization, products_of_interest)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 """,
                 SEED_CUSTOMERS,
             )

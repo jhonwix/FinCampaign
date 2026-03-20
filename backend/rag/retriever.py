@@ -26,13 +26,39 @@ def _get_credentials():
         return None  # Fall back to ADC if file not found
 
 
+# ── Singleton client — created once, reused across all RAG calls (A2) ────────
+_search_client: discoveryengine.SearchServiceClient | None = None
+
+
+def _get_search_client() -> discoveryengine.SearchServiceClient:
+    """Return a module-level singleton SearchServiceClient (thread-safe init)."""
+    global _search_client
+    if _search_client is None:
+        _search_client = discoveryengine.SearchServiceClient(
+            credentials=_get_credentials()
+        )
+    return _search_client
+
+
+# ── In-process RAG cache — deduplicates identical queries within a batch (A1) ─
+# Key: (query, num_results, datastore_id). Cleared at the start of each campaign run.
+# For 100 customers: reduces ~600 RAG calls to ~25 unique queries per batch.
+_rag_cache: dict[tuple, str] = {}
+
+
+def clear_rag_cache() -> None:
+    """Clear the RAG cache. Call at the start of each campaign batch run."""
+    global _rag_cache
+    _rag_cache = {}
+    print(f"[RAG] Cache cleared")
+
+
 def _sync_search(query: str, serving_config: str, num_results: int) -> list[str]:
     """
     Blocking Vertex AI Search call. Intended to be called via run_in_executor.
     Returns a list of extracted text snippets from the search results.
     """
-    credentials = _get_credentials()
-    client = discoveryengine.SearchServiceClient(credentials=credentials)
+    client = _get_search_client()
 
     request = discoveryengine.SearchRequest(
         serving_config=serving_config,
@@ -70,6 +96,7 @@ async def retrieve_context(
     query: str,
     num_results: int = 3,
     datastore_id: str | None = None,
+    use_cache: bool = True,
 ) -> str:
     """
     Async interface for Vertex AI Search retrieval.
@@ -92,6 +119,11 @@ async def retrieve_context(
     else:
         serving_config = settings.serving_config
 
+    # ── Cache lookup (A1) ───────────────────────────────────────────────────
+    cache_key = (query, num_results, datastore_id)
+    if use_cache and cache_key in _rag_cache:
+        return _rag_cache[cache_key]
+
     loop = asyncio.get_running_loop()
     try:
         snippets = await loop.run_in_executor(
@@ -106,11 +138,17 @@ async def retrieve_context(
         return "[No relevant policies found for this query]"
 
     body = "\n\n".join(f"- {s}" for s in snippets)
-    return (
+    result = (
         "--- Relevant Policy Context (from official documents) ---\n"
         f"{body}\n"
         "---"
     )
+
+    # ── Cache store ─────────────────────────────────────────────────────────
+    if use_cache:
+        _rag_cache[cache_key] = result
+
+    return result
 
 
 async def retrieve_multi_context(

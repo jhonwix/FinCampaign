@@ -58,12 +58,13 @@ export function Dashboard() {
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="text-left px-4 py-3 font-semibold text-slate-600">ID</th>
-                <th className="text-left px-4 py-3 font-semibold text-slate-600">Name</th>
-                <th className="text-left px-4 py-3 font-semibold text-slate-600">Age</th>
-                <th className="text-right px-4 py-3 font-semibold text-slate-600">Income</th>
-                <th className="text-right px-4 py-3 font-semibold text-slate-600">Debt</th>
+                <th className="text-left px-4 py-3 font-semibold text-slate-600">Cédula</th>
+                <th className="text-left px-4 py-3 font-semibold text-slate-600">Nombre</th>
+                <th className="text-left px-4 py-3 font-semibold text-slate-600">Edad</th>
+                <th className="text-right px-4 py-3 font-semibold text-slate-600">Ingresos</th>
+                <th className="text-right px-4 py-3 font-semibold text-slate-600">Deuda</th>
                 <th className="text-right px-4 py-3 font-semibold text-slate-600">Score</th>
-                <th className="text-right px-4 py-3 font-semibold text-slate-600">Late Pmts</th>
+                <th className="text-right px-4 py-3 font-semibold text-slate-600">Retrasos</th>
                 <th className="text-right px-4 py-3 font-semibold text-slate-600">Util%</th>
                 <th className="text-left px-4 py-3 font-semibold text-slate-600">Products</th>
                 <th className="px-4 py-3" />
@@ -73,6 +74,7 @@ export function Dashboard() {
               {data?.customers.map((c) => (
                 <tr key={c.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 py-3 text-slate-400 font-mono text-xs">{c.id}</td>
+                  <td className="px-4 py-2 text-slate-500 font-mono text-xs">{c.id_number || '—'}</td>
                   <td className="px-4 py-3 font-medium text-slate-800">
                     <button
                       className="hover:text-indigo-600 transition-colors text-left"

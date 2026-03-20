@@ -41,10 +41,21 @@ _RESPONSE_SCHEMA = {
         "eligible_for_credit": {"type": "boolean"},
         "recommended_products": {"type": "array", "items": {"type": "string"}},
         "rationale": {"type": "string"},
+        "confidence": {
+            "type": "number",
+            "description": (
+                "Your confidence in this risk assessment (0.0–1.0). "
+                "Use 0.95 for clear-cut segmentation. "
+                "Use 0.75 if the credit score falls within 20 points of a segment boundary. "
+                "Use 0.60 if DTI is close to the eligibility threshold (±5%). "
+                "Use 0.55 for profiles with contradictory signals (e.g. high score but many late payments). "
+                "Never report above 0.99 or below 0.30."
+            ),
+        },
     },
     "required": [
         "segment", "risk_level", "dti",
-        "eligible_for_credit", "recommended_products", "rationale",
+        "eligible_for_credit", "recommended_products", "rationale", "confidence",
     ],
 }
 
@@ -87,18 +98,21 @@ Customer Profile:
 Return the complete risk assessment JSON.
 """
         loop = asyncio.get_running_loop()
-        text = await loop.run_in_executor(
-            None,
-            partial(
-                generate_content,
-                prompt,
-                settings.risk_analyst_model,
-                _SYSTEM_PROMPT,
-                0.1,
-                1024,
-                "application/json",
-                _RESPONSE_SCHEMA,
+        text = await asyncio.wait_for(
+            loop.run_in_executor(
+                None,
+                partial(
+                    generate_content,
+                    prompt,
+                    settings.risk_analyst_model,
+                    _SYSTEM_PROMPT,
+                    0.1,
+                    1024,
+                    "application/json",
+                    _RESPONSE_SCHEMA,
+                ),
             ),
+            timeout=45.0,
         )
         return json.loads(text)
 

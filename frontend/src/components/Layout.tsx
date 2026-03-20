@@ -1,6 +1,6 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { BrainCircuit, Activity } from 'lucide-react'
+import { BrainCircuit, Activity, Network, Upload } from 'lucide-react'
 import { api } from '../api/client'
 
 export function Layout() {
@@ -44,6 +44,17 @@ export function Layout() {
                 Customers
               </button>
               <button
+                onClick={() => navigate('/customers/import')}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5 ${
+                  location.pathname === '/customers/import'
+                    ? 'bg-indigo-50 text-indigo-700'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <Upload className="w-3.5 h-3.5" />
+                Importar
+              </button>
+              <button
                 onClick={() => navigate('/campaigns')}
                 className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
                   location.pathname.startsWith('/campaigns')
@@ -52,6 +63,17 @@ export function Layout() {
                 }`}
               >
                 Campañas
+              </button>
+              <button
+                onClick={() => navigate('/architecture')}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5 ${
+                  location.pathname === '/architecture'
+                    ? 'bg-indigo-50 text-indigo-700'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <Network className="w-3.5 h-3.5" />
+                Arquitectura
               </button>
             </nav>
 

@@ -1,0 +1,73 @@
+{
+  "eval_set_id": "compliance_gates",
+  "name": "FinCampaign – Calidad de Compliance",
+  "description": "Verifica que el ComplianceGateAgent aprueba campañas limpias y rechaza (con corrección automática) campañas con problemas de lenguaje garantizado o falta de divulgación de tasas.",
+  "eval_cases": [
+    {
+      "eval_id": "compliance_approved_prime",
+      "session_input": {
+        "app_name": "agents_adk",
+        "user_id": "eval_comp_u1",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "inv_comp_001",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Cliente: Sofía Herrera, 36 años, ingreso mensual 6200, deuda mensual 900, score crediticio 748, 0 pagos tardíos, utilización de crédito 22%, canal email, productos de interés: tarjeta de crédito, préstamo personal"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "{\"headline\": \"Sofía, tu perfil financiero abre la puerta a grandes oportunidades\", \"body\": \"Tu historial impecable y buen manejo crediticio te hacen elegible para nuestros productos. Te ofrecemos una tarjeta de crédito o préstamo personal con tasas entre 10% y 15% anual. La aprobación está sujeta a verificación de información. Contamos con opciones flexibles que se adaptan a tus metas financieras.\", \"next_steps\": [\"Solicita en línea hoy\", \"Recibe respuesta en 48 horas\", \"Activa tu producto y comienza a disfrutar los beneficios\"], \"tone\": \"formal\"}"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "tool_responses": []
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "compliance_rejected_deep_subprime",
+      "session_input": {
+        "app_name": "agents_adk",
+        "user_id": "eval_comp_u2",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "inv_comp_002",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Cliente: Marcos Díaz, 52 años, ingreso mensual 1500, deuda mensual 1100, score crediticio 510, 8 pagos tardíos, utilización de crédito 98%, canal sms, productos de interés: cualquier crédito disponible"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "{\"headline\": \"Marcos, queremos ayudarte a construir tu futuro financiero\", \"body\": \"Tu situación actual presenta retos importantes: tu deuda representa el 73% de tus ingresos y tienes varios pagos pendientes. Esto hace que hoy no seas elegible para un crédito. Sin embargo, con pasos concretos puedes mejorar tu perfil en 12 meses. Lo más importante ahora es regularizar tus pagos atrasados y reducir gradualmente tus deudas.\", \"next_steps\": [\"Contacta a tus acreedores para negociar un plan de pago para los 8 pagos tardíos\", \"Prioriza cancelar la deuda más pequeña primero para ganar impulso\", \"En 6 meses revisa tu score en el buró de crédito para medir tu progreso\"], \"tone\": \"encouraging\"}"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "tool_responses": []
+          }
+        }
+      ]
+    }
+  ]
+}

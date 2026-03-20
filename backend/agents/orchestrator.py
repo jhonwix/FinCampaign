@@ -1,8 +1,20 @@
 """
-FinCampaign Coordinator — Deterministic Pipeline Orchestrator
+FinCampaign Coordinator — Dynamic Pipeline Orchestrator
 
-Enforces: Risk Analysis → Campaign Generation → Compliance Check
-Compliance is NEVER skipped. Results are always persisted to GCS.
+Routes each customer through one of four specialized pipelines based on
+their risk segment and eligibility, rather than forcing every customer
+through the same sequence.
+
+  EDUCATIONAL   — DEEP-SUBPRIME: financial rehabilitation plan, no credit offer
+  PREMIUM_FAST  — SUPER-PRIME:   fast path, compliance checked once (no retry loop)
+  CONDITIONAL   — SUBPRIME ineligible: conditional improvement offer
+  STANDARD      — All other eligible customers: full pipeline with correction loop
+
+Compliance is NEVER skipped — only the self-correction loop is shortened for
+routes where retries add latency without material benefit (PREMIUM_FAST,
+EDUCATIONAL).
+
+Results are always persisted to GCS.
 """
 
 import asyncio
@@ -15,8 +27,13 @@ from google.oauth2 import service_account
 
 from agents.campaign_generator import campaign_generator_agent
 from agents.compliance_checker import compliance_checker_agent
+from agents.conditional_offer_agent import conditional_offer_agent
+from agents.financial_education_agent import financial_education_agent
 from agents.risk_analyst import risk_analyst_agent
 from config import settings
+from tools.customer_history import get_customer_history_context, summarize_history_for_log
+from tools.customer_memory import get_customer_memory_card, refresh_customer_memory
+from db.queries import save_customer_interaction
 from models.schemas import (
     AnalysisResponse,
     Campaign,
@@ -25,29 +42,92 @@ from models.schemas import (
     generate_request_id,
 )
 
-_INELIGIBLE_CAMPAIGN = {
-    "product_name": "N/A",
-    "campaign_message": (
-        "Actualmente no calificas para los productos disponibles. "
-        "Te recomendamos trabajar en tu historial crediticio y "
-        "contactarnos nuevamente en 6 meses para una nueva evaluación."
-    ),
-    "key_benefits": ["Asesoría gratuita de crédito disponible"],
-    "cta": "Habla con un asesor financiero",
-    "channel": "Teléfono",
-    "rates": "N/A",
-}
+_MAX_CORRECTIONS = 2          # max campaign regeneration attempts (STANDARD route only)
+_CONFIDENCE_THRESHOLD = 0.65  # below this → automatic human review escalation
+
+
+def _compute_pipeline_confidence(
+    risk_data: dict,
+    compliance_data: dict,
+    route: str,
+) -> float:
+    """
+    Aggregate agent confidence scores and apply deterministic overrides.
+
+    Base: minimum of risk_confidence and compliance_confidence (most conservative).
+    Overrides: verdict-based caps and signal-based floor reductions.
+
+    Args:
+        risk_data:       Risk Analyst output (includes 'confidence' field).
+        compliance_data: Compliance Checker output (includes 'confidence' field).
+        route:           Active pipeline route.
+
+    Returns:
+        Float in [0.0, 1.0] representing overall pipeline confidence.
+    """
+    # EDUCATIONAL: the decision is clear (DEEP-SUBPRIME). Confidence reflects
+    # the segmentation quality, not an approval decision.
+    if route == "EDUCATIONAL":
+        return round(float(risk_data.get("confidence", 0.90)), 2)
+
+    # Base confidence: minimum of the two agent scores
+    risk_conf = max(0.0, min(1.0, float(risk_data.get("confidence", 1.0))))
+    comp_conf = max(0.0, min(1.0, float(compliance_data.get("confidence", 1.0))))
+    conf = min(risk_conf, comp_conf)
+
+    # ── Verdict-based caps ─────────────────────────────────────────────────────
+    verdict = compliance_data.get("overall_verdict", "APPROVED")
+    if verdict == "REJECTED":
+        conf = min(conf, 0.40)
+    elif verdict == "REVIEW":
+        conf = min(conf, 0.65)
+    elif verdict == "APPROVED_WITH_WARNINGS":
+        conf = min(conf, 0.82)
+
+    # ── Signal-based overrides ─────────────────────────────────────────────────
+    # DTI near the 48% ineligibility boundary → ambiguous eligibility call
+    dti = float(risk_data.get("dti", 0))
+    if 43.0 <= dti <= 53.0:
+        conf = min(conf, 0.72)
+
+    # Many compliance warnings → verdict less certain
+    n_warnings = len(compliance_data.get("warnings", []))
+    if n_warnings >= 3:
+        conf = min(conf, 0.65)
+    elif n_warnings == 2:
+        conf = min(conf, 0.75)
+
+    return round(max(0.0, min(1.0, conf)), 2)
+
+
+def _determine_route(risk_data: dict) -> str:
+    """
+    Select the pipeline route based on risk assessment output.
+
+    Decision tree:
+      DEEP-SUBPRIME              → EDUCATIONAL   (always ineligible; no credit offer)
+      SUPER-PRIME                → PREMIUM_FAST  (streamlined; no retry loop needed)
+      SUBPRIME + not eligible    → CONDITIONAL   (close to qualifying; improvement path)
+      everything else            → STANDARD      (full pipeline with compliance loop)
+    """
+    segment = risk_data.get("segment", "NEAR-PRIME")
+    eligible = risk_data.get("eligible_for_credit", False)
+
+    if segment == "DEEP-SUBPRIME":
+        return "EDUCATIONAL"
+    if segment == "SUPER-PRIME":
+        return "PREMIUM_FAST"
+    if segment == "SUBPRIME" and not eligible:
+        return "CONDITIONAL"
+    return "STANDARD"
 
 
 class FinCampaignOrchestrator:
     """
     Central coordinator for the multi-agent credit campaign pipeline.
 
-    Enforces the strict sequence:
-      1. Risk Analysis      (always runs)
-      2. Campaign Generation (skipped for ineligible customers)
-      3. Compliance Check   (always runs, never skippable)
-      4. GCS Storage        (always runs)
+    Determines the appropriate route per customer and dispatches to the
+    correct agent sequence. All routes persist results to GCS.
     """
 
     def __init__(self) -> None:
@@ -71,37 +151,195 @@ class FinCampaignOrchestrator:
 
     async def analyze_customer(self, customer_profile: dict) -> AnalysisResponse:
         """
-        Run the full pipeline for a single customer.
+        Run the appropriate pipeline for a single customer.
 
         Args:
             customer_profile: Dict matching CustomerProfile schema.
 
         Returns:
-            AnalysisResponse with all three agent outputs and GCS storage URI.
+            AnalysisResponse with all agent outputs, route label, and GCS URI.
         """
         start_time = time.time()
         request_id = generate_request_id()
 
-        # Step 1: Risk Analysis
+        # ── Step 1: Risk Analysis (always runs) ─────────────────────────────────
         risk_data = await risk_analyst_agent.analyze(customer_profile)
         risk_assessment = RiskAssessment(**risk_data)
 
-        # Step 2: Campaign Generation (skipped if ineligible)
-        if not risk_assessment.eligible_for_credit:
-            campaign_data = _INELIGIBLE_CAMPAIGN
-        else:
-            campaign_data = await campaign_generator_agent.generate(
+        # ── Step 2: Route determination ─────────────────────────────────────────
+        route = _determine_route(risk_data)
+
+        # ── Step 2b: Customer memory card (Phase 3) ──────────────────────────────
+        # Prefer the structured memory card over raw history.
+        # Falls back to raw history if no memory card exists yet (first run).
+        customer_id = customer_profile.get("customer_id")
+        customer_history = await get_customer_memory_card(customer_id)
+        if not customer_history:
+            customer_history = await get_customer_history_context(customer_id)
+
+        print(
+            f"[Orchestrator] {customer_profile.get('name')} → route={route} "
+            f"segment={risk_assessment.segment} eligible={risk_assessment.eligible_for_credit} "
+            f"memory={summarize_history_for_log(customer_history)}"
+        )
+
+        # ── Step 3: Agent dispatch by route ─────────────────────────────────────
+        correction_attempts = 0
+        campaign_data: dict
+        compliance_data: dict
+
+        if route == "EDUCATIONAL":
+            # DEEP-SUBPRIME: generate a financial rehabilitation plan.
+            # Compliance runs once (to audit the educational message), no retry loop.
+            campaign_data = await financial_education_agent.educate(
                 customer_profile, risk_data
             )
-        campaign = Campaign(**campaign_data)
+            compliance_data = await compliance_checker_agent.check(
+                customer_profile, risk_data, campaign_data
+            )
+            # Educational content rarely fails compliance, but if it does → escalate
+            verdict = compliance_data.get("overall_verdict", "")
+            has_fail = any(
+                compliance_data.get(k) == "FAIL"
+                for k in ("fair_lending", "apr_disclosure", "messaging", "channel")
+            )
+            if verdict == "REJECTED" or has_fail:
+                compliance_data["human_review_required"] = True
+                compliance_data.setdefault("warnings", []).append(
+                    "Ruta EDUCATIONAL: contenido educativo requiere revisión manual."
+                )
 
-        # Step 3: Compliance Check — mandatory, no exceptions
-        compliance_data = await compliance_checker_agent.check(
-            customer_profile, risk_data, campaign_data
-        )
+        elif route == "PREMIUM_FAST":
+            # SUPER-PRIME: standard campaign generation, compliance checked once.
+            # Self-correction loop is skipped — SUPER-PRIME profiles are clean by nature.
+            # If compliance unexpectedly fails, escalate directly to human review
+            # rather than wasting retries on an already-strong profile.
+            campaign_data = await campaign_generator_agent.generate(
+                customer_profile, risk_data, customer_history=customer_history
+            )
+            compliance_data = await compliance_checker_agent.check(
+                customer_profile, risk_data, campaign_data
+            )
+            verdict = compliance_data.get("overall_verdict", "")
+            has_fail = any(
+                compliance_data.get(k) == "FAIL"
+                for k in ("fair_lending", "apr_disclosure", "messaging", "channel")
+            )
+            if verdict == "REJECTED" or has_fail:
+                compliance_data["human_review_required"] = True
+                compliance_data.setdefault("warnings", []).append(
+                    "Ruta PREMIUM_FAST: falla de compliance inesperada — requiere revisión manual."
+                )
+
+        elif route == "CONDITIONAL":
+            # SUBPRIME ineligible: generate a conditional improvement path.
+            # One correction pass is allowed (conditional messages can have
+            # messaging compliance issues that are fixable).
+            campaign_data = await conditional_offer_agent.generate_conditional(
+                customer_profile, risk_data
+            )
+            compliance_data = await compliance_checker_agent.check(
+                customer_profile, risk_data, campaign_data
+            )
+            verdict = compliance_data.get("overall_verdict", "")
+            has_fail = any(
+                compliance_data.get(k) == "FAIL"
+                for k in ("fair_lending", "apr_disclosure", "messaging", "channel")
+            )
+            if verdict == "REJECTED" or has_fail:
+                correction_attempts += 1
+                print(
+                    f"[Orchestrator] CONDITIONAL compliance failed for "
+                    f"{customer_profile.get('name')} — running one correction pass"
+                )
+                # Use campaign_generator.regenerate since the fix logic is generic
+                campaign_data = await campaign_generator_agent.regenerate(
+                    customer_profile, risk_data, campaign_data, compliance_data,
+                    customer_history=customer_history,
+                )
+                compliance_data = await compliance_checker_agent.check(
+                    customer_profile, risk_data, campaign_data
+                )
+                # After one pass: escalate if still failing
+                verdict = compliance_data.get("overall_verdict", "")
+                has_fail = any(
+                    compliance_data.get(k) == "FAIL"
+                    for k in ("fair_lending", "apr_disclosure", "messaging", "channel")
+                )
+                if verdict == "REJECTED" or has_fail:
+                    compliance_data["human_review_required"] = True
+                    compliance_data.setdefault("warnings", []).append(
+                        "Ruta CONDITIONAL: corrección fallida — requiere revisión manual."
+                    )
+
+        else:
+            # STANDARD route: full Campaign Generation → Compliance → self-correction loop.
+            # This is the core production path for PRIME, NEAR-PRIME, and eligible SUBPRIME.
+            campaign_data = await campaign_generator_agent.generate(
+                customer_profile, risk_data, customer_history=customer_history
+            )
+            compliance_data = await compliance_checker_agent.check(
+                customer_profile, risk_data, campaign_data
+            )
+
+            for _ in range(_MAX_CORRECTIONS):
+                verdict = compliance_data.get("overall_verdict", "")
+                has_fail = any(
+                    compliance_data.get(k) == "FAIL"
+                    for k in ("fair_lending", "apr_disclosure", "messaging", "channel")
+                )
+                if verdict != "REJECTED" and not has_fail:
+                    break  # compliance passed well enough — exit loop
+
+                correction_attempts += 1
+                print(
+                    f"[Orchestrator] Compliance {verdict} for {customer_profile.get('name')} "
+                    f"— correction attempt {correction_attempts}/{_MAX_CORRECTIONS}"
+                )
+                campaign_data = await campaign_generator_agent.regenerate(
+                    customer_profile, risk_data, campaign_data, compliance_data,
+                    customer_history=customer_history,
+                )
+                compliance_data = await compliance_checker_agent.check(
+                    customer_profile, risk_data, campaign_data
+                )
+
+            # Escalate if still failing after max retries
+            if correction_attempts == _MAX_CORRECTIONS:
+                verdict = compliance_data.get("overall_verdict", "")
+                has_fail = any(
+                    compliance_data.get(k) == "FAIL"
+                    for k in ("fair_lending", "apr_disclosure", "messaging", "channel")
+                )
+                if verdict == "REJECTED" or has_fail:
+                    compliance_data["human_review_required"] = True
+                    compliance_data.setdefault("warnings", []).append(
+                        f"Auto-corrección fallida tras {correction_attempts} intentos. "
+                        "Requiere revisión manual obligatoria."
+                    )
+
+        # ── Step 4: Confidence aggregation + automatic escalation ───────────────
+        pipeline_confidence = _compute_pipeline_confidence(risk_data, compliance_data, route)
+
+        # Auto-escalate when confidence is below threshold (except EDUCATIONAL,
+        # which is already routed to human review by nature)
+        if pipeline_confidence < _CONFIDENCE_THRESHOLD and route != "EDUCATIONAL":
+            compliance_data["human_review_required"] = True
+            compliance_data.setdefault("warnings", []).append(
+                f"Confianza del pipeline: {pipeline_confidence:.0%} — "
+                f"por debajo del umbral de {_CONFIDENCE_THRESHOLD:.0%}. "
+                "Revisión manual recomendada."
+            )
+            print(
+                f"[Orchestrator] LOW CONFIDENCE {pipeline_confidence:.2f} for "
+                f"{customer_profile.get('name')} — auto-escalating to human review"
+            )
+
+        # ── Step 5: Build response models ───────────────────────────────────────
+        campaign = Campaign(**campaign_data)
         compliance = ComplianceResult(**compliance_data)
 
-        # Step 4: Persist to GCS
+        # ── Step 6: Persist to GCS ───────────────────────────────────────────────
         processing_ms = int((time.time() - start_time) * 1000)
         stored_at = await self._store_result(
             request_id=request_id,
@@ -110,16 +348,43 @@ class FinCampaignOrchestrator:
             campaign=campaign_data,
             compliance=compliance_data,
             processing_ms=processing_ms,
+            correction_attempts=correction_attempts,
+            pipeline_route=route,
+            pipeline_confidence=pipeline_confidence,
         )
+
+        # ── Step 7b: Write interaction + refresh memory card ────────────────────
+        if customer_id:
+            try:
+                await save_customer_interaction(
+                    customer_id=customer_id,
+                    request_id=request_id,
+                    segment=risk_data.get("segment"),
+                    eligible=risk_data.get("eligible_for_credit", False),
+                    dti=float(risk_data.get("dti", 0)),
+                    product_offered=campaign_data.get("product_name"),
+                    verdict=compliance_data.get("overall_verdict"),
+                    channel=campaign_data.get("channel"),
+                    pipeline_route=route,
+                    confidence=pipeline_confidence,
+                    campaign_id=customer_profile.get("campaign_id"),
+                )
+                await refresh_customer_memory(customer_id, customer_profile.get("name", ""))
+            except Exception as exc:
+                print(f"[Memory] Failed to update memory for customer {customer_id}: {exc}")
 
         return AnalysisResponse(
             request_id=request_id,
             customer_name=customer_profile.get("name", "Unknown"),
+            customer_id=customer_id,
             risk_assessment=risk_assessment,
             campaign=campaign,
             compliance=compliance,
             stored_at=stored_at,
             processing_time_ms=processing_ms,
+            correction_attempts=correction_attempts,
+            pipeline_route=route,
+            pipeline_confidence=pipeline_confidence,
         )
 
     async def analyze_batch(
@@ -189,6 +454,9 @@ class FinCampaignOrchestrator:
         campaign: dict,
         compliance: dict,
         processing_ms: int,
+        correction_attempts: int = 0,
+        pipeline_route: str = "STANDARD",
+        pipeline_confidence: float = 1.0,
     ) -> str:
         """
         Persist analysis result to GCS.
@@ -200,10 +468,10 @@ class FinCampaignOrchestrator:
             f"/{request_id}.json"
         )
 
-        # Store profile with reduced PII (scores and ratios only)
         payload = {
             "request_id": request_id,
             "timestamp": now.isoformat() + "Z",
+            "pipeline_route": pipeline_route,
             "customer_name": customer_profile.get("name"),
             "customer_profile": {
                 "credit_score": customer_profile.get("credit_score"),
@@ -215,6 +483,8 @@ class FinCampaignOrchestrator:
             "campaign": campaign,
             "compliance": compliance,
             "processing_ms": processing_ms,
+            "correction_attempts": correction_attempts,
+            "pipeline_confidence": pipeline_confidence,
         }
 
         content = json.dumps(payload, ensure_ascii=False, indent=2)
@@ -234,11 +504,17 @@ class FinCampaignOrchestrator:
             f"batches/{now.year}/{now.month:02d}/{now.day:02d}"
             f"/{batch_id}.json"
         )
+        # Route distribution summary
+        route_counts: dict[str, int] = {}
+        for r in results:
+            route_counts[r.pipeline_route] = route_counts.get(r.pipeline_route, 0) + 1
+
         summary = {
             "batch_id": batch_id,
             "timestamp": now.isoformat() + "Z",
             "processed": len(results),
             "error_count": len(errors),
+            "route_distribution": route_counts,
             "result_ids": [r.request_id for r in results],
         }
         content = json.dumps(summary, indent=2)

@@ -1,0 +1,172 @@
+{
+  "eval_set_id": "segment_routing",
+  "name": "FinCampaign – Routing por Segmento",
+  "description": "Verifica que cada segmento crediticio sea enrutado al pipeline correcto y que la explicación final sea coherente con el perfil del cliente.",
+  "eval_cases": [
+    {
+      "eval_id": "deep_subprime_educational",
+      "session_input": {
+        "app_name": "agents_adk",
+        "user_id": "eval_u1",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "inv_ds_001",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Cliente: Pedro Mora, 45 años, ingreso mensual 1800, deuda mensual 1200, score crediticio 540, 6 pagos tardíos, utilización de crédito 95%, canal email, productos de interés: préstamo personal"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "{\"headline\": \"Te acompañamos en tu camino hacia el crédito\", \"body\": \"Actualmente tu perfil no cumple los requisitos mínimos para acceder a un crédito. Tu nivel de deuda es alto y tu historial de pagos muestra varias deudas atrasadas. Con disciplina financiera podrás mejorar tu situación. Te recomendamos reducir tus deudas actuales, ponerte al día con los pagos pendientes y evitar nuevas deudas durante los próximos meses.\", \"next_steps\": [\"Regulariza los 6 pagos tardíos contactando a tus acreedores\", \"Reduce tu deuda mensual por debajo de 900 en los próximos 6 meses\", \"Revisa tu buró de crédito y corrige errores\"], \"tone\": \"encouraging\"}"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "tool_responses": []
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "super_prime_premium",
+      "session_input": {
+        "app_name": "agents_adk",
+        "user_id": "eval_u2",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "inv_sp_001",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Cliente: Valentina Torres, 38 años, ingreso mensual 9500, deuda mensual 800, score crediticio 825, 0 pagos tardíos, utilización de crédito 12%, canal email, productos de interés: tarjeta de crédito premium, inversiones"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "{\"headline\": \"Su perfil financiero es excepcional, Valentina\", \"body\": \"Valentina, su solidez financiera y excelente historial crediticio la califican para nuestra oferta exclusiva de Tarjeta de Crédito Premium y oportunidades de inversión. Su puntaje de crédito alto, el bajo nivel de endeudamiento y un historial impecable sin pagos atrasados la posicionan en nuestro segmento de mayor privilegio. Por eso, hemos diseñado una propuesta que refleja su estatus, ofreciéndole beneficios premium y acceso a inversiones personalizadas para potenciar su patrimonio. Este es el reconocimiento a su excelente gestión financiera.\", \"next_steps\": [\"Explore los beneficios exclusivos de la Tarjeta de Crédito Premium.\", \"Descubra las oportunidades de inversión a medida para usted.\", \"Solicite una consulta privada para diseñar su estrategia financiera definitiva.\"], \"tone\": \"exclusive\"}"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "tool_responses": []
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "prime_correction_loop",
+      "session_input": {
+        "app_name": "agents_adk",
+        "user_id": "eval_u3",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "inv_pr_001",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Cliente: Carlos Medina, 41 años, ingreso mensual 5800, deuda mensual 1200, score crediticio 755, 0 pagos tardíos, utilización de crédito 28%, canal email, productos de interés: préstamo personal, tarjeta de crédito"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "{\"headline\": \"Carlos, calificas para una oferta financiera a tu medida\", \"body\": \"Tu buen historial crediticio y manejo responsable de tus deudas te hacen elegible para nuestros productos financieros. Con un score de 755 y un DTI del 20%, demuestras solidez financiera. Te ofrecemos un préstamo personal o tarjeta de crédito con tasas competitivas entre el 10% y 15% anual, sin cargos de apertura.\", \"next_steps\": [\"Elige el producto que mejor se adapta a tus necesidades\", \"Completa tu solicitud en línea en menos de 10 minutos\", \"Recibe respuesta en 48 horas hábiles\"], \"tone\": \"formal\"}"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "tool_responses": []
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "near_prime_supportive",
+      "session_input": {
+        "app_name": "agents_adk",
+        "user_id": "eval_u4",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "inv_np_001",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Cliente: Laura Sánchez, 33 años, ingreso mensual 2900, deuda mensual 980, score crediticio 672, 1 pago tardío, utilización de crédito 58%, canal whatsapp, productos de interés: préstamo de libre inversión"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "{\"headline\": \"Laura, tienes una oferta de préstamo disponible para ti\", \"body\": \"Tu perfil muestra progreso financiero y capacidad de pago. Con un score de 672 y tus ingresos actuales calificas para nuestro préstamo de libre inversión. Entendemos que has tenido algún reto en el pasado, y por eso te ofrecemos condiciones accesibles con una tasa anual entre 18% y 24% para que logres tus proyectos con tranquilidad.\", \"next_steps\": [\"Contáctanos para conocer los montos disponibles según tu perfil\", \"Prepara tu documentación básica para agilizar el proceso\", \"Pregunta por el plan de pagos que mejor se adapte a ti\"], \"tone\": \"friendly\"}"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "tool_responses": []
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "subprime_conditional",
+      "session_input": {
+        "app_name": "agents_adk",
+        "user_id": "eval_u5",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "inv_sub_001",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Cliente: Andrés Ruiz, 29 años, ingreso mensual 2200, deuda mensual 1180, score crediticio 622, 2 pagos tardíos, utilización de crédito 78%, canal email, productos de interés: préstamo de libre inversión"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "{\"headline\": \"Estás cerca: te decimos exactamente qué mejorar para calificar\", \"body\": \"Andrés, hoy no cumples el requisito de deuda máxima para acceder al préstamo, pero estás muy cerca. Tu DTI actual es del 53%, y necesitas reducirlo por debajo del 48%. Eso significa bajar tu deuda mensual en aproximadamente 120. Con un plan de 4-6 meses puedes lograrlo y acceder a nuestro préstamo de libre inversión.\", \"next_steps\": [\"Reduce tu deuda mensual en 120 pesos cancelando el crédito de menor monto\", \"Mantén tus pagos al día durante los próximos 4 meses\", \"Vuelve a aplicar cuando tu DTI esté por debajo del 48%\"], \"tone\": \"encouraging\"}"
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "tool_responses": []
+          }
+        }
+      ]
+    }
+  ]
+}

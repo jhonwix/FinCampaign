@@ -5,12 +5,21 @@ import type {
   CampaignRecord,
   CampaignResultRow,
   CampaignRunResult,
+  CampaignRunStarted,
+  CampaignRunStatus,
   Customer,
   CustomerResult,
+  ImportResult,
+  LookupMap,
+  ReviewRequest,
+  ReviewResponse,
 } from './types'
 
 // Re-export so pages can import from one place
-export type { Campaign, CampaignCreate, CampaignRecord, CampaignResultRow, CampaignRunResult }
+export type {
+  Campaign, CampaignCreate, CampaignRecord, CampaignResultRow, CampaignRunResult,
+  CampaignRunStarted, CampaignRunStatus, ImportResult, LookupMap, ReviewRequest, ReviewResponse,
+}
 
 const BASE = '/api'
 
@@ -52,11 +61,34 @@ export const api = {
   getCampaign: (id: number): Promise<CampaignRecord> =>
     request(`/campaigns/${id}`),
 
-  runCampaign: (id: number): Promise<CampaignRunResult> =>
+  runCampaign: (id: number): Promise<CampaignRunStarted> =>
     request(`/campaigns/${id}/run`, { method: 'POST' }),
+
+  getRunStatus: (id: number, batchId: string): Promise<CampaignRunStatus> =>
+    request(`/campaigns/${id}/run-status?batch_id=${encodeURIComponent(batchId)}`),
 
   getCampaignResults: (
     id: number
   ): Promise<{ campaign_id: number; results: CampaignResultRow[]; total: number }> =>
     request(`/campaigns/${id}/results`),
+
+  reviewResult: (
+    campaignId: number,
+    resultId: number,
+    body: ReviewRequest,
+  ): Promise<ReviewResponse> =>
+    request(`/campaigns/${campaignId}/results/${resultId}/review`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
+
+  importCustomers: (file: File): Promise<ImportResult> => {
+    const form = new FormData()
+    form.append('file', file)
+    return request('/customers/import', { method: 'POST', body: form })
+  },
+
+  getLookups: (): Promise<LookupMap> =>
+    request('/lookups'),
 }

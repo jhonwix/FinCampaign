@@ -15,9 +15,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from agents.orchestrator import orchestrator
 from config import settings
 from db.connection import get_pool, close_pool
+from db.lookups import load_lookup_cache, get_all_lookups
 from db.queries import (
     get_customer_by_id,
     list_customers,
+    count_customers,
     save_campaign_result,
     get_results_by_customer,
     create_campaign,
@@ -26,6 +28,8 @@ from db.queries import (
     update_campaign_status,
     update_campaign_stats,
     get_campaign_results,
+    delete_campaign_results,
+    bulk_insert_customers,
 )
 from models.schemas import (
     AnalysisResponse,
@@ -34,11 +38,17 @@ from models.schemas import (
     CampaignCreate,
     CampaignResponse,
     CampaignRunResponse,
+    CampaignRunStarted,
+    CampaignRunStatus,
     CustomerProfile,
     DocumentListResponse,
     HealthResponse,
+    ReviewAction,
+    ReviewResponse,
 )
+from db.queries import update_result_review
 from rag.indexer import index_local_documents
+from rag.retriever import clear_rag_cache
 
 
 @asynccontextmanager
@@ -49,6 +59,8 @@ async def lifespan(app: FastAPI):
     try:
         await get_pool()
         print(f"[FinCampaign] PostgreSQL connected — db: {settings.postgres_db}")
+        await load_lookup_cache()
+        print("[FinCampaign] Lookup cache loaded.")
     except Exception as e:
         print(f"[FinCampaign] PostgreSQL unavailable: {e}")
     yield
@@ -73,6 +85,12 @@ app.add_middleware(
 
 
 # ── Health ─────────────────────────────────────────────────────────────────────
+
+@app.get("/api/lookups")
+async def get_lookups_endpoint():
+    """Return all active lookup values grouped by category (served from in-memory cache)."""
+    return get_all_lookups()
+
 
 @app.get("/api/health", response_model=HealthResponse)
 async def health_check():
@@ -142,12 +160,14 @@ async def get_result(request_id: str):
 async def list_customers_endpoint(limit: int = 100, offset: int = 0):
     """List all customers from PostgreSQL."""
     try:
-        customers = await list_customers(limit=limit, offset=offset)
-        # Convert datetime to string for JSON serialization
+        customers, total = await asyncio.gather(
+            list_customers(limit=limit, offset=offset),
+            count_customers(),
+        )
         for c in customers:
             if c.get("created_at"):
                 c["created_at"] = c["created_at"].isoformat()
-        return {"customers": customers, "total": len(customers)}
+        return {"customers": customers, "total": total}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"DB error: {exc}") from exc
 
@@ -173,6 +193,8 @@ async def analyze_customer_from_db(customer_id: int):
         "late_payments": customer["late_payments"],
         "credit_utilization": float(customer["credit_utilization"]),
         "products_of_interest": customer["products_of_interest"],
+        "existing_products": customer.get("existing_products") or "",
+        "customer_id": customer_id,  # enables history tool call in orchestrator
     }
 
     try:
@@ -190,12 +212,120 @@ async def analyze_customer_from_db(customer_id: int):
             compliance=result.compliance.model_dump(),
             gcs_path=result.stored_at,
             processing_ms=result.processing_time_ms or 0,
+            pipeline_route=result.pipeline_route,
+            pipeline_confidence=result.pipeline_confidence,
+            correction_attempts=result.correction_attempts,
         )
     except Exception as exc:
         # Don't fail the response if DB save fails — result is already in GCS
         print(f"[DB] Failed to save result for customer {customer_id}: {exc}")
 
     return result
+
+
+@app.post("/api/customers/import")
+async def import_customers_csv(file: UploadFile = File(...)):
+    """
+    Bulk-import customers from a UTF-8 CSV file.
+
+    Required columns: name, age, monthly_income, monthly_debt,
+                      credit_score, late_payments, credit_utilization,
+                      products_of_interest
+
+    Returns a summary: total_rows, imported, duplicates,
+                       validation_errors, db_errors.
+    """
+    import csv as _csv
+    import io as _io
+
+    if not (file.filename or "").lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only .csv files are accepted.")
+
+    raw = await file.read()
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        text = raw.decode("latin-1")
+
+    reader = _csv.DictReader(_io.StringIO(text))
+    fieldnames = set(reader.fieldnames or [])
+    required = {
+        "id_number", "name", "age", "monthly_income", "monthly_debt",
+        "credit_score", "late_payments", "credit_utilization",
+        "products_of_interest",
+    }
+    missing = required - fieldnames
+    if missing:
+        raise HTTPException(
+            status_code=400,
+            detail=f"CSV is missing required columns: {sorted(missing)}",
+        )
+
+    valid: list[dict] = []
+    validation_errors: list[dict] = []
+
+    for line_no, row in enumerate(reader, start=2):
+        errs: list[str] = []
+        try:
+            id_number = str(row.get("id_number") or "").strip()
+            name = (row.get("name") or "").strip()
+            age = int(row.get("age", 0))
+            monthly_income = float(row.get("monthly_income", 0))
+            monthly_debt = float(row.get("monthly_debt", 0))
+            credit_score = int(row.get("credit_score", 0))
+            late_payments = int(row.get("late_payments", 0))
+            credit_utilization = float(row.get("credit_utilization", 0))
+            products_of_interest = (row.get("products_of_interest") or "").strip()
+
+            if not id_number:             errs.append("id_number: requerido")
+            elif len(id_number) < 4:      errs.append("id_number: mínimo 4 caracteres")
+            elif len(id_number) > 20:     errs.append("id_number: máximo 20 caracteres")
+            if len(name) < 2:             errs.append("name: mínimo 2 caracteres")
+            if not (18 <= age <= 100):    errs.append("age: debe estar entre 18 y 100")
+            if monthly_income <= 0:       errs.append("monthly_income: debe ser > 0")
+            if monthly_debt < 0:          errs.append("monthly_debt: no puede ser negativo")
+            if not (300 <= credit_score <= 850): errs.append("credit_score: rango válido 300-850")
+            if late_payments < 0:         errs.append("late_payments: no puede ser negativo")
+            if not (0 <= credit_utilization <= 100): errs.append("credit_utilization: rango 0-100")
+            if len(products_of_interest) < 3: errs.append("products_of_interest: muy corto")
+
+            if errs:
+                validation_errors.append({"row": line_no, "name": name, "errors": errs})
+                continue
+
+            valid.append({
+                "id_number": id_number,
+                "name": name, "age": age,
+                "monthly_income": monthly_income, "monthly_debt": monthly_debt,
+                "credit_score": credit_score, "late_payments": late_payments,
+                "credit_utilization": credit_utilization,
+                "products_of_interest": products_of_interest,
+                "existing_products": (row.get("existing_products") or "").strip(),
+            })
+        except (ValueError, TypeError) as exc:
+            validation_errors.append({"row": line_no, "name": row.get("name", "?"), "errors": [str(exc)]})
+
+    total_rows = len(valid) + len(validation_errors)
+
+    if not valid:
+        return {
+            "total_rows": total_rows,
+            "imported": 0, "duplicates": 0,
+            "validation_errors": validation_errors, "db_errors": [],
+        }
+
+    try:
+        result = await bulk_insert_customers(valid)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"DB import failed: {exc}") from exc
+
+    return {
+        "total_rows": total_rows,
+        "imported": result["inserted"],
+        "duplicates": result["duplicates"],
+        "validation_errors": validation_errors,
+        "db_errors": result["errors"],
+    }
 
 
 @app.get("/api/customers/{customer_id}/results")
@@ -287,6 +417,224 @@ _SEGMENT_RANGES: dict[str, tuple[int, int]] = {
     "DEEP-SUBPRIME":(300, 579),
 }
 
+# Campaign type → keyword to match in existing_products
+_PRODUCT_KEYWORDS: dict[str, str] = {
+    "VEHICULOS":   "vehiculo",
+    "HIPOTECARIO": "hipotecario",
+    "PERSONAL":    "personal",
+    "CDT":         "cdt",
+    "TARJETA":     "tarjeta",
+}
+
+
+# ── Async job store ────────────────────────────────────────────────────────────
+# Maps batch_id → job metadata. Single-process POC; not persisted across restarts.
+_run_jobs: dict[str, dict] = {}
+
+
+def _filter_qualifying(campaign: dict, all_customers: list[dict]) -> list[dict]:
+    """Return customers that pass all campaign filter criteria."""
+    import json as _json
+
+    segments = campaign["target_segments"]
+    if isinstance(segments, str):
+        segments = _json.loads(segments)
+
+    min_score = int(campaign["min_credit_score"])
+    max_score = int(campaign["max_credit_score"])
+    min_income = float(campaign["min_monthly_income"])
+    max_dti = float(campaign["max_dti"])
+    max_late = int(campaign["max_late_payments"])
+    max_util = float(campaign["max_credit_utilization"])
+
+    qualifying = []
+    for c in all_customers:
+        score = int(c["credit_score"])
+        income = float(c["monthly_income"])
+        debt = float(c["monthly_debt"])
+        dti = (debt / income * 100) if income > 0 else 0
+        late = int(c["late_payments"])
+        util = float(c["credit_utilization"])
+
+        if not (min_score <= score <= max_score):
+            continue
+        if income < min_income:
+            continue
+        if dti > max_dti:
+            continue
+        if late > max_late:
+            continue
+        if util > max_util:
+            continue
+
+        # Segment filter
+        if segments:
+            seg = next(
+                (s for s, (lo, hi) in _SEGMENT_RANGES.items() if lo <= score <= hi),
+                None,
+            )
+            if seg not in segments:
+                continue
+
+        # Intent filter based on existing_products
+        intent = (campaign.get("campaign_intent") or "NEW").upper()
+        keyword = _PRODUCT_KEYWORDS.get(campaign["type"], "").lower()
+        if keyword:
+            existing = (c.get("existing_products") or "").lower()
+            if intent == "NEW" and keyword in existing:
+                continue
+            elif intent == "RENEWAL" and keyword not in existing:
+                continue
+
+        qualifying.append(c)
+
+    return qualifying
+
+
+def _build_profiles(campaign: dict, qualifying: list[dict]) -> list[dict]:
+    """Build CustomerProfile dicts from qualifying customers + campaign constraints."""
+    product_override = campaign["product_name"]
+    intent = (campaign.get("campaign_intent") or "NEW").upper()
+    camp_rate_min = float(campaign.get("rate_min") or 0)
+    camp_rate_max = float(campaign.get("rate_max") or 0)
+    camp_max_amount = float(campaign.get("max_amount") or 0)
+    camp_term_months = int(campaign.get("term_months") or 0)
+    camp_message_tone = campaign.get("message_tone") or ""
+    camp_cta_text = campaign.get("cta_text") or ""
+
+    profiles = []
+    for c in qualifying:
+        p = {
+            "name": c["name"],
+            "age": c["age"],
+            "monthly_income": float(c["monthly_income"]),
+            "monthly_debt": float(c["monthly_debt"]),
+            "credit_score": c["credit_score"],
+            "late_payments": c["late_payments"],
+            "credit_utilization": float(c["credit_utilization"]),
+            "products_of_interest": product_override or c["products_of_interest"],
+            "existing_products": c.get("existing_products") or "",
+            "campaign_intent": intent,
+            "customer_id": c["id"],
+            "campaign_id": campaign.get("id"),
+            "rate_min": camp_rate_min if camp_rate_min > 0 else None,
+            "rate_max": camp_rate_max if camp_rate_max > 0 else None,
+            "max_amount": camp_max_amount if camp_max_amount > 0 else None,
+            "term_months": camp_term_months if camp_term_months > 0 else None,
+            "message_tone": camp_message_tone or None,
+            "cta_text": camp_cta_text or None,
+        }
+        profiles.append(p)
+    return profiles
+
+
+async def _execute_campaign_run(
+    campaign_id: int,
+    campaign: dict,
+    batch_id: str,
+) -> None:
+    """
+    Background coroutine: run the full batch pipeline and write results to DB.
+    Updates _run_jobs[batch_id] throughout execution.
+    Launched via asyncio.create_task() — never awaited directly by the HTTP handler.
+    """
+    job = _run_jobs[batch_id]
+    try:
+        # Clear previous results so each run produces a single clean report
+        deleted = await delete_campaign_results(campaign_id)
+        if deleted:
+            print(f"[Campaign] Cleared {deleted} previous results for campaign {campaign_id}")
+
+        clear_rag_cache()  # A1: reset per-batch RAG cache before processing begins
+
+        all_customers = await list_customers(limit=10000)
+        qualifying = _filter_qualifying(campaign, all_customers)
+        profiles = _build_profiles(campaign, qualifying)
+        targeted = len(qualifying)
+
+        # Process customers with progressive updates — use asyncio.as_completed so
+        # _run_jobs is updated after every individual customer, not only at the end.
+        # Semaphore(10): doubled from 5 — safe with persistent httpx + RAG clients (A4)
+        semaphore = asyncio.Semaphore(10)
+
+        async def _process_one(profile: dict):
+            async with semaphore:
+                try:
+                    return await orchestrator.analyze_customer(profile), None
+                except Exception as exc:
+                    return None, {"customer": profile.get("name"), "error": str(exc)}
+
+        tasks = [asyncio.create_task(_process_one(p)) for p in profiles]
+
+        approved = 0
+        review = 0
+        processed = 0
+        errors: list = []
+
+        for coro in asyncio.as_completed(tasks):
+            res, err = await coro
+            if err:
+                errors.append(err)
+            else:
+                customer_id = res.customer_id
+                if customer_id is None:
+                    print(f"[Campaign] Warning: no customer_id on result {res.request_id}, skipping save")
+                else:
+                    verdict = res.compliance.overall_verdict
+                    human_review = res.compliance.human_review_required
+                    if human_review:
+                        review += 1
+                    elif verdict in ("APPROVED", "APPROVED_WITH_WARNINGS"):
+                        approved += 1
+                    try:
+                        await save_campaign_result(
+                            customer_id=customer_id,
+                            request_id=res.request_id,
+                            risk_assessment=res.risk_assessment.model_dump(),
+                            campaign=res.campaign.model_dump(),
+                            compliance=res.compliance.model_dump(),
+                            gcs_path=res.stored_at,
+                            processing_ms=res.processing_time_ms or 0,
+                            campaign_id=campaign_id,
+                            pipeline_route=res.pipeline_route,
+                            pipeline_confidence=res.pipeline_confidence,
+                            correction_attempts=res.correction_attempts,
+                        )
+                    except Exception as exc:
+                        print(f"[Campaign] Failed to save result for customer {customer_id}: {exc}")
+
+            processed += 1
+            # Update progress visible to the polling endpoint after every customer
+            job.update({
+                "total_processed": processed,
+                "total_approved": approved,
+                "total_review": review,
+            })
+
+        await update_campaign_stats(campaign_id, targeted, processed, approved, review)
+        await update_campaign_status(campaign_id, "COMPLETED")
+
+        job.update({
+            "status": "COMPLETED",
+            "total_processed": processed,
+            "total_approved": approved,
+            "total_review": review,
+            "completed_at": datetime.utcnow().isoformat() + "Z",
+        })
+        print(f"[Campaign] batch {batch_id} COMPLETED — {processed}/{targeted} processed")
+
+    except Exception as exc:
+        try:
+            await update_campaign_status(campaign_id, "FAILED")
+        except Exception:
+            pass
+        job.update({
+            "status": "FAILED",
+            "error_message": str(exc),
+            "completed_at": datetime.utcnow().isoformat() + "Z",
+        })
+        print(f"[Campaign] batch {batch_id} FAILED: {exc}")
+
 
 def _campaign_row_to_response(row: dict) -> dict:
     """Serialize asyncpg row to CampaignResponse-compatible dict."""
@@ -337,144 +685,83 @@ async def get_campaign_endpoint(campaign_id: int):
     return _campaign_row_to_response(row)
 
 
-@app.post("/api/campaigns/{campaign_id}/run", response_model=CampaignRunResponse)
+@app.post("/api/campaigns/{campaign_id}/run", response_model=CampaignRunStarted)
 async def run_campaign(campaign_id: int):
     """
-    Execute the 3-agent pipeline against all qualifying customers.
+    Start the batch pipeline asynchronously.
 
-    Filters applied locally:
-      - credit_score BETWEEN min/max
-      - monthly_income >= min
-      - (monthly_debt/monthly_income*100) <= max_dti
-      - late_payments <= max
-      - credit_utilization <= max
-      - if target_segments not empty → only matching segments
+    Returns immediately with { batch_id, status: "RUNNING", campaign_id, total_targeted }.
+    Poll GET /api/campaigns/{campaign_id}/run-status?batch_id=... for completion.
     """
     campaign = await get_campaign_by_id(campaign_id)
     if campaign is None:
         raise HTTPException(status_code=404, detail=f"Campaign {campaign_id} not found")
 
-    await update_campaign_status(campaign_id, "RUNNING")
-
-    try:
-        all_customers = await list_customers(limit=10000)
-
-        # Deserialize target_segments
-        import json as _json
-        segments = campaign["target_segments"]
-        if isinstance(segments, str):
-            segments = _json.loads(segments)
-
-        min_score    = int(campaign["min_credit_score"])
-        max_score    = int(campaign["max_credit_score"])
-        min_income   = float(campaign["min_monthly_income"])
-        max_dti      = float(campaign["max_dti"])
-        max_late     = int(campaign["max_late_payments"])
-        max_util     = float(campaign["max_credit_utilization"])
-
-        qualifying = []
-        for c in all_customers:
-            score  = int(c["credit_score"])
-            income = float(c["monthly_income"])
-            debt   = float(c["monthly_debt"])
-            dti    = (debt / income * 100) if income > 0 else 0
-            late   = int(c["late_payments"])
-            util   = float(c["credit_utilization"])
-
-            if not (min_score <= score <= max_score):
-                continue
-            if income < min_income:
-                continue
-            if dti > max_dti:
-                continue
-            if late > max_late:
-                continue
-            if util > max_util:
-                continue
-
-            # Segment filter
-            if segments:
-                seg = next(
-                    (s for s, (lo, hi) in _SEGMENT_RANGES.items() if lo <= score <= hi),
-                    None,
-                )
-                if seg not in segments:
-                    continue
-
-            qualifying.append(c)
-
-        # Override products_of_interest with campaign product_name
-        product_override = campaign["product_name"]
-        profiles = []
-        for c in qualifying:
-            p = {
-                "name":                c["name"],
-                "age":                 c["age"],
-                "monthly_income":      float(c["monthly_income"]),
-                "monthly_debt":        float(c["monthly_debt"]),
-                "credit_score":        c["credit_score"],
-                "late_payments":       c["late_payments"],
-                "credit_utilization":  float(c["credit_utilization"]),
-                "products_of_interest": product_override or c["products_of_interest"],
-            }
-            profiles.append(p)
-
-        ts = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-        batch_id = f"CAMP-{campaign_id}-{ts}"
-
-        batch = await orchestrator.analyze_batch(profiles, batch_id=batch_id)
-
-        results: list = batch.get("results", [])
-        errors: list  = batch.get("errors", [])
-
-        # Save each result to campaign_results
-        approved = 0
-        review   = 0
-        for i, res in enumerate(results):
-            customer_id = qualifying[i]["id"]
-            verdict = res.compliance.overall_verdict if hasattr(res, "compliance") else ""
-            if verdict in ("APPROVED", "APPROVED_WITH_WARNINGS"):
-                approved += 1
-            if getattr(getattr(res, "compliance", None), "human_review_required", False):
-                review += 1
-            try:
-                await save_campaign_result(
-                    customer_id=customer_id,
-                    request_id=res.request_id,
-                    risk_assessment=res.risk_assessment.model_dump(),
-                    campaign=res.campaign.model_dump(),
-                    compliance=res.compliance.model_dump(),
-                    gcs_path=res.stored_at,
-                    processing_ms=res.processing_time_ms or 0,
-                    campaign_id=campaign_id,
-                )
-            except Exception as exc:
-                print(f"[Campaign] Failed to save result for customer {customer_id}: {exc}")
-
-        targeted   = len(qualifying)
-        processed  = len(results)
-
-        await update_campaign_stats(campaign_id, targeted, processed, approved, review)
-        await update_campaign_status(campaign_id, "COMPLETED")
-
-        return CampaignRunResponse(
-            campaign_id=campaign_id,
-            batch_id=batch_id,
-            total_targeted=targeted,
-            total_processed=processed,
-            total_approved=approved,
-            total_review=review,
-            results=results,
-            errors=errors,
+    if campaign["status"] == "RUNNING":
+        raise HTTPException(
+            status_code=409,
+            detail="Campaign is already running. Poll /run-status for progress.",
         )
 
-    except Exception as exc:
-        # Reset status so the campaign can be re-run
-        try:
-            await update_campaign_status(campaign_id, "DRAFT")
-        except Exception:
-            pass
-        raise HTTPException(status_code=500, detail=f"Campaign run failed: {exc}") from exc
+    # Compute qualifying count now so the caller knows total_targeted immediately
+    all_customers = await list_customers(limit=10000)
+    qualifying = _filter_qualifying(campaign, all_customers)
+
+    ts = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    batch_id = f"CAMP-{campaign_id}-{ts}"
+
+    # Register the job BEFORE launching the task (avoids a race with the status poll)
+    _run_jobs[batch_id] = {
+        "batch_id": batch_id,
+        "campaign_id": campaign_id,
+        "status": "RUNNING",
+        "total_targeted": len(qualifying),
+        "total_processed": 0,
+        "total_approved": 0,
+        "total_review": 0,
+        "error_message": None,
+        "started_at": datetime.utcnow().isoformat() + "Z",
+        "completed_at": None,
+    }
+
+    await update_campaign_status(campaign_id, "RUNNING")
+
+    # Fire and forget — does NOT block the HTTP response
+    asyncio.create_task(_execute_campaign_run(campaign_id, campaign, batch_id))
+
+    return CampaignRunStarted(
+        batch_id=batch_id,
+        status="RUNNING",
+        campaign_id=campaign_id,
+        total_targeted=len(qualifying),
+    )
+
+
+@app.get("/api/campaigns/{campaign_id}/run-status", response_model=CampaignRunStatus)
+async def get_run_status(campaign_id: int, batch_id: str):
+    """
+    Poll for batch job progress.
+    Returns current status from the in-memory job store.
+    Once status = COMPLETED, invalidate campaign and results queries.
+    """
+    job = _run_jobs.get(batch_id)
+    if job is None:
+        # Fallback: job not found (server restarted mid-run) — read best-effort from DB
+        campaign = await get_campaign_by_id(campaign_id)
+        db_status = campaign["status"] if campaign else "FAILED"
+        return CampaignRunStatus(
+            batch_id=batch_id,
+            campaign_id=campaign_id,
+            status=db_status,
+            total_targeted=int(campaign.get("total_targeted") or 0) if campaign else 0,
+            total_processed=int(campaign.get("total_processed") or 0) if campaign else 0,
+            total_approved=int(campaign.get("total_approved") or 0) if campaign else 0,
+            total_review=int(campaign.get("total_review") or 0) if campaign else 0,
+            error_message="Job state lost (server restart). Check campaign status.",
+            started_at=campaign.get("last_run_at") or datetime.utcnow().isoformat() + "Z" if campaign else "",
+            completed_at=None,
+        )
+    return CampaignRunStatus(**job)
 
 
 @app.get("/api/campaigns/{campaign_id}/results")
@@ -488,9 +775,53 @@ async def get_campaign_results_endpoint(campaign_id: int):
         for r in rows:
             if r.get("processed_at"):
                 r["processed_at"] = r["processed_at"].isoformat()
+            if r.get("reviewed_at"):
+                r["reviewed_at"] = r["reviewed_at"].isoformat()
         return {"campaign_id": campaign_id, "results": rows, "total": len(rows)}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"DB error: {exc}") from exc
+
+
+@app.patch(
+    "/api/campaigns/{campaign_id}/results/{result_id}/review",
+    response_model=ReviewResponse,
+)
+async def review_campaign_result(
+    campaign_id: int,
+    result_id: int,
+    body: ReviewAction,
+):
+    """
+    Approve or reject a campaign result that has human_review_required=True.
+
+    action: "APPROVE" or "REJECT"
+    note:   optional analyst note (stored in review_note)
+
+    Idempotent: re-reviewing the same result overwrites the previous decision.
+    """
+    campaign = await get_campaign_by_id(campaign_id)
+    if campaign is None:
+        raise HTTPException(status_code=404, detail=f"Campaign {campaign_id} not found")
+
+    review_status = "APPROVED" if body.action == "APPROVE" else "REJECTED"
+
+    updated = await update_result_review(
+        result_id=result_id,
+        review_status=review_status,
+        review_note=body.note,
+    )
+    if updated is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Result {result_id} not found in campaign {campaign_id}",
+        )
+
+    return ReviewResponse(
+        result_id=updated["id"],
+        review_status=updated["review_status"],
+        review_note=updated["review_note"] or "",
+        reviewed_at=updated["reviewed_at"],
+    )
 
 
 if __name__ == "__main__":

@@ -17,6 +17,13 @@ from config import settings
 _BASE_URL = "https://aiplatform.googleapis.com/v1/publishers/google/models"
 _TIMEOUT = 60.0
 
+# ── Persistent httpx client — connection pooling across all Gemini calls (A3) ─
+# limits=httpx.Limits: max 20 keep-alive connections, 10 per host
+_http_client = httpx.Client(
+    timeout=_TIMEOUT,
+    limits=httpx.Limits(max_keepalive_connections=20, max_connections=30),
+)
+
 
 def generate_content(
     prompt: str,
@@ -73,9 +80,8 @@ def generate_content(
 
     payload["generationConfig"] = generation_config
 
-    with httpx.Client(timeout=_TIMEOUT) as client:
-        response = client.post(url, json=payload)
-        response.raise_for_status()
+    response = _http_client.post(url, json=payload)
+    response.raise_for_status()
 
     data = response.json()
     return data["candidates"][0]["content"]["parts"][0]["text"]

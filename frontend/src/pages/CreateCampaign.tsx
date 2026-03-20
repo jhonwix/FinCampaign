@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronLeft, Users } from 'lucide-react'
 import { api } from '../api/client'
-import type { CampaignCreate, CampaignType, SegmentName, Customer } from '../api/types'
+import type { CampaignCreate, CampaignType, CampaignIntent, SegmentName, Customer } from '../api/types'
+import { useLookups } from '../api/useLookups'
 
 // ── Segment score ranges ─────────────────────────────────────────────────────
 const SEGMENT_RANGES: Record<SegmentName, [number, number]> = {
@@ -39,6 +40,13 @@ const PRESETS: Record<CampaignType, Preset> = {
   TARJETA:     { product_name: 'Tarjeta de Crédito',   min_credit_score: 620, max_credit_score: 850, min_monthly_income: 1200, max_dti: 45, max_late_payments: 2, max_credit_utilization: 60, term_months: 0,   max_amount: 10000  },
 }
 
+// UI metadata for intent cards — label/description/color stay here, values come from /api/lookups
+const INTENT_META: Record<string, { label: string; description: string; color: string }> = {
+  NEW:     { label: 'Adquisición', description: 'Clientes que NO tienen el producto. El agente excluirá quienes ya lo posean.', color: 'indigo' },
+  RENEWAL: { label: 'Renovación',  description: 'Clientes que YA tienen el producto. El agente generará mensajes de fidelización.', color: 'emerald' },
+  CROSS:   { label: 'Cross-sell',  description: 'Todos los clientes calificados, sin importar si ya tienen el producto.', color: 'amber' },
+}
+
 const BLANK: CampaignCreate = {
   name: '',
   type: 'PERSONAL',
@@ -58,6 +66,7 @@ const BLANK: CampaignCreate = {
   channel: 'Email',
   message_tone: 'Amigable',
   cta_text: '',
+  campaign_intent: 'NEW',
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -87,10 +96,14 @@ function Label({ children }: { children: React.ReactNode }) {
   return <label className="block text-xs font-medium text-slate-600 mb-1">{children}</label>
 }
 
-function Input({ className = '', ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+function Input({ className = '', onFocus, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       className={`w-full px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 ${className}`}
+      onFocus={(e) => {
+        if (e.target.type === 'number') e.target.select()
+        onFocus?.(e)
+      }}
       {...props}
     />
   )
@@ -117,6 +130,7 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 export function CreateCampaign() {
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const lookups = useLookups()
   const [form, setForm] = useState<CampaignCreate>({ ...BLANK, ...PRESETS['PERSONAL'] })
   const [error, setError] = useState('')
 
@@ -146,7 +160,17 @@ export function CreateCampaign() {
   }
 
   function handleTypeChange(type: CampaignType) {
-    setForm((f) => ({ ...f, type, ...PRESETS[type] }))
+    setForm((f) => {
+      const prevPresetName = PRESETS[f.type as CampaignType]?.product_name ?? ''
+      const userCustomized = f.product_name !== prevPresetName
+      return {
+        ...f,
+        type,
+        ...PRESETS[type],
+        // Keep user's custom product_name if they deviated from the previous preset
+        product_name: userCustomized ? f.product_name : PRESETS[type].product_name,
+      }
+    })
   }
 
   function toggleSegment(seg: SegmentName) {
@@ -206,7 +230,7 @@ export function CreateCampaign() {
                 value={form.type}
                 onChange={(e) => handleTypeChange(e.target.value as CampaignType)}
               >
-                {(['HIPOTECARIO', 'VEHICULOS', 'CDT', 'PERSONAL', 'TARJETA'] as CampaignType[]).map((t) => (
+                {(lookups.campaign_type.length ? lookups.campaign_type : ['HIPOTECARIO', 'VEHICULOS', 'CDT', 'PERSONAL', 'TARJETA']).map((t) => (
                   <option key={t} value={t}>{t}</option>
                 ))}
               </Select>
@@ -215,7 +239,7 @@ export function CreateCampaign() {
             <div>
               <Label>Canal</Label>
               <Select value={form.channel} onChange={(e) => set('channel', e.target.value)}>
-                {['Email', 'SMS', 'Push', 'WhatsApp'].map((ch) => (
+                {(lookups.campaign_channel.length ? lookups.campaign_channel : ['Email', 'SMS', 'Push', 'WhatsApp']).map((ch) => (
                   <option key={ch}>{ch}</option>
                 ))}
               </Select>
@@ -224,7 +248,7 @@ export function CreateCampaign() {
             <div>
               <Label>Tono del mensaje</Label>
               <Select value={form.message_tone} onChange={(e) => set('message_tone', e.target.value)}>
-                {['Amigable', 'Profesional', 'Urgente', 'Premium', 'Empático'].map((t) => (
+                {(lookups.message_tone.length ? lookups.message_tone : ['Amigable', 'Profesional', 'Urgente', 'Premium', 'Empatico']).map((t) => (
                   <option key={t}>{t}</option>
                 ))}
               </Select>
@@ -252,9 +276,42 @@ export function CreateCampaign() {
           </div>
         </div>
 
-        {/* Section 2: Audience */}
+        {/* Section 2: Intent */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <SectionHeader>2 — Audiencia</SectionHeader>
+          <SectionHeader>2 — Intención de campaña</SectionHeader>
+          <div className="grid grid-cols-3 gap-3">
+            {(lookups.campaign_intent.length ? lookups.campaign_intent : ['NEW', 'RENEWAL', 'CROSS']).map((intentValue) => {
+              const meta = INTENT_META[intentValue] ?? { label: intentValue, description: '', color: 'indigo' }
+              const selected = form.campaign_intent === intentValue
+              const colorMap: Record<string, string> = {
+                indigo:  selected ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-400'  : 'border-slate-200 hover:border-indigo-300',
+                emerald: selected ? 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-400' : 'border-slate-200 hover:border-emerald-300',
+                amber:   selected ? 'border-amber-500 bg-amber-50 ring-1 ring-amber-400'    : 'border-slate-200 hover:border-amber-300',
+              }
+              const dotMap: Record<string, string> = {
+                indigo: 'bg-indigo-500', emerald: 'bg-emerald-500', amber: 'bg-amber-500',
+              }
+              return (
+                <button
+                  key={intentValue}
+                  type="button"
+                  onClick={() => set('campaign_intent', intentValue as CampaignIntent)}
+                  className={`text-left p-4 rounded-xl border-2 transition-all cursor-pointer ${colorMap[meta.color]}`}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dotMap[meta.color]}`} />
+                    <span className="text-sm font-semibold text-slate-800">{meta.label}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 leading-snug">{meta.description}</p>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Section 3: Audience */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <SectionHeader>3 — Audiencia</SectionHeader>
 
           {/* Live preview */}
           <div className="mb-5 flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-2.5 text-sm">
@@ -338,9 +395,9 @@ export function CreateCampaign() {
           </div>
         </div>
 
-        {/* Section 3: Product */}
+        {/* Section 4: Product */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <SectionHeader>3 — Producto</SectionHeader>
+          <SectionHeader>4 — Producto</SectionHeader>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <Label>Nombre del producto</Label>

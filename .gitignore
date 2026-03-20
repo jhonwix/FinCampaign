@@ -21,6 +21,8 @@ env/
 !package-lock.json
 !tsconfig*.json
 !vite.config.*
+!*.evalset.json
+!eval_config.json
 
 # Node
 node_modules/

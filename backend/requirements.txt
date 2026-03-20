@@ -1,17 +1,20 @@
-# Web framework
-fastapi==0.115.6
-uvicorn[standard]==0.32.1
+# Web framework (upgraded by google-adk 1.27.2)
+fastapi==0.135.1
+uvicorn[standard]==0.42.0
+
+# Google ADK — multi-agent orchestration framework (Fase E)
+google-adk==1.27.2
 python-multipart==0.0.12
 
 # Google Cloud — core
 google-auth==2.37.0
 google-api-core[grpc]==2.24.0
 
-# Vertex AI SDK (for Discovery Engine / Vertex AI Search)
-google-cloud-aiplatform==1.74.0
+# Vertex AI SDK (upgraded by google-adk to 1.141.0)
+google-cloud-aiplatform==1.141.0
 
-# Vertex AI Search / Discovery Engine (RAG)
-google-cloud-discoveryengine==0.16.0
+# Vertex AI Search / Discovery Engine (RAG) — managed by google-adk
+google-cloud-discoveryengine==0.13.12
 
 # Google Cloud Storage (result persistence)
 google-cloud-storage==2.19.0
