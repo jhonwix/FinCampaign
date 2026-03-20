@@ -235,7 +235,7 @@ export function ArchitecturePage() {
           <h1 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#e2e8f0', letterSpacing: '0.3px' }}>
             Arquitectura del Sistema — FinCampaign ADK
           </h1>
-          <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#2a4a6a', letterSpacing: '0.5px' }}>
+          <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#475569', letterSpacing: '0.5px' }}>
             13 AGENTES · RAG + LLM · ROUTING DINÁMICO · MEMORY CARD · AUTO-CORRECCIÓN · CONFIDENCE SCORING
           </p>
         </div>
@@ -243,7 +243,7 @@ export function ArchitecturePage() {
           {Object.entries(COLORS).map(([group, c]) => (
             <div key={group} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10px' }}>
               <div style={{ width: 7, height: 7, backgroundColor: c.border }} />
-              <span style={{ color: '#1e3a5f', textTransform: 'uppercase', letterSpacing: '0.8px' }}>{group}</span>
+              <span style={{ color: '#475569', textTransform: 'uppercase', letterSpacing: '0.8px' }}>{group}</span>
             </div>
           ))}
         </div>
@@ -464,7 +464,7 @@ export function ArchitecturePage() {
                   borderRadius: '3px',
                   border: `1px solid ${isActive ? color : '#0e2038'}`,
                   backgroundColor: isActive ? `${color}18` : 'transparent',
-                  color: isActive ? color : '#1e3a5f',
+                  color: isActive ? color : '#475569',
                   fontSize: '11px',
                   fontWeight: isActive ? 700 : 500,
                   cursor: 'pointer',
@@ -480,7 +480,7 @@ export function ArchitecturePage() {
           })}
 
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <span style={{ fontSize: '10px', color: '#1a3550', fontFamily: 'inherit' }}>
+            <span style={{ fontSize: '10px', color: '#475569', fontFamily: 'inherit' }}>
               {viewIdx + 1}&thinsp;/&thinsp;{VIEWS.length}
             </span>
             <button onClick={() => setViewIdx(i => Math.max(0, i - 1))} disabled={viewIdx === 0} style={navBtn}>
@@ -514,7 +514,7 @@ export function ArchitecturePage() {
             <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#cbd5e1', letterSpacing: '0.2px' }}>
               {view.title}
             </p>
-            <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#334155', lineHeight: 1.7, whiteSpace: 'pre-line', fontFamily: 'inherit' }}>
+            <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#64748b', lineHeight: 1.7, whiteSpace: 'pre-line', fontFamily: 'inherit' }}>
               {view.desc}
             </p>
           </div>
@@ -529,6 +529,6 @@ const navBtn: React.CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   width: '26px', height: '26px',
   borderRadius: '3px', border: '1px solid #0e2038',
-  backgroundColor: '#030e1e', color: '#1e3a5f',
+  backgroundColor: '#030e1e', color: '#475569',
   cursor: 'pointer',
 }
