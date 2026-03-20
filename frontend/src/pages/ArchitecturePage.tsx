@@ -191,7 +191,8 @@ export function ArchitecturePage() {
     <div style={{
       margin: '-24px -16px',
       backgroundColor: '#020b18',
-      minHeight: '100vh',
+      height: '100vh',
+      overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
       fontFamily: 'ui-monospace, "Cascadia Code", "Source Code Pro", monospace',
@@ -249,14 +250,13 @@ export function ArchitecturePage() {
       </div>
 
       {/* ── Diagram ── */}
-      <div key={viewIdx} style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-        <div style={{ width: '100%', paddingBottom: `${(VH / VW) * 100}%`, position: 'relative' }}>
+      <div key={viewIdx} style={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
 
           {/* SVG — lanes + edges */}
           <svg
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
             viewBox={`0 0 ${VW} ${VH}`}
-            preserveAspectRatio="xMidYMid meet"
+            preserveAspectRatio="none"
           >
             <defs>
               {/* Arrow for background edges */}
@@ -444,7 +444,6 @@ export function ArchitecturePage() {
               </div>
             )
           })}
-        </div>
       </div>
 
       {/* ── Bottom Panel ── */}
