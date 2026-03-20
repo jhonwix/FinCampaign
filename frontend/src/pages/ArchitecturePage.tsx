@@ -235,7 +235,7 @@ export function ArchitecturePage() {
           <h1 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#e2e8f0', letterSpacing: '0.3px' }}>
             Arquitectura del Sistema — FinCampaign ADK
           </h1>
-          <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#475569', letterSpacing: '0.5px' }}>
+          <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#94a3b8', letterSpacing: '0.5px' }}>
             13 AGENTES · RAG + LLM · ROUTING DINÁMICO · MEMORY CARD · AUTO-CORRECCIÓN · CONFIDENCE SCORING
           </p>
         </div>
@@ -243,7 +243,7 @@ export function ArchitecturePage() {
           {Object.entries(COLORS).map(([group, c]) => (
             <div key={group} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10px' }}>
               <div style={{ width: 7, height: 7, backgroundColor: c.border }} />
-              <span style={{ color: '#475569', textTransform: 'uppercase', letterSpacing: '0.8px' }}>{group}</span>
+              <span style={{ color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px' }}>{group}</span>
             </div>
           ))}
         </div>
