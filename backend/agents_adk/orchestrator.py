@@ -36,6 +36,7 @@ from agents_adk.educational_agent import educational_agent  # noqa: E402
 from agents_adk.premium_pipeline import premium_pipeline  # noqa: E402
 from agents_adk.conditional_agent import conditional_agent  # noqa: E402
 from agents_adk.correction_loop import correction_loop  # noqa: E402
+from agents_adk.callbacks import log_routing_decision  # noqa: E402
 
 _MODEL = Gemini(
     model="gemini-2.5-flash-lite",
@@ -93,4 +94,5 @@ orchestrator = LlmAgent(
         conditional_agent,   # SUBPRIME ineligible → conditional path
         correction_loop,     # PRIME/NEAR-PRIME → full loop
     ],
+    after_agent_callback=log_routing_decision,
 )

@@ -32,6 +32,7 @@ from google.adk.agents import LlmAgent  # noqa: E402
 from google.adk.agents.readonly_context import ReadonlyContext  # noqa: E402
 from google.adk.models import Gemini  # noqa: E402
 from google.genai import types  # noqa: E402
+from agents_adk.callbacks import log_evaluator_selection, route_to_pro_if_borderline  # noqa: E402
 
 _MODEL = Gemini(
     model="gemini-2.5-flash-lite",
@@ -121,4 +122,6 @@ campaign_evaluator = LlmAgent(
     instruction=_evaluator_instruction,
     # No tools needed — evaluator reasons purely from session state
     output_key="campaign",
+    before_model_callback=route_to_pro_if_borderline,
+    after_agent_callback=log_evaluator_selection,
 )

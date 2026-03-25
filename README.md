@@ -1,40 +1,35 @@
 # FinCampaign — Multi-Agent Credit Campaign System
 
-A production-grade multi-agent AI system for personalized credit campaign generation, built on **Google ADK 1.27.2**, **Vertex AI**, and **Gemini 2.5 Flash Lite**.
+A production-grade multi-agent AI system for personalized credit campaign generation, built on **Google ADK 1.27.2**, **Vertex AI**, and **Gemini 2.5 Flash Lite / Pro**.
 
-The system receives a customer credit profile, routes it through a hierarchy of 13 specialized AI agents, retrieves credit policies via RAG, and generates a compliance-validated personalized campaign — with automatic self-correction, confidence scoring, and full explainability.
+The system receives a customer credit profile, routes it through a hierarchy of **14 specialized AI agents**, retrieves credit policies via RAG, and generates a compliance-validated personalized campaign — with automatic self-correction, quality gating, dynamic model routing, confidence scoring, and full explainability.
 
 ---
 
 ## Agentic Architecture
 
 ```
-                    FinCampaignPipeline (SequentialAgent)
-                              │
-                    ┌─────────┴──────────┐
-              RiskAnalystAgent      FinCampaignOrchestrator
-              (segment + DTI)        (dynamic routing)
-                                          │
-                    ┌─────────────────────┼──────────────────────┐
-                    │                     │                       │
-            EducationalAgent       PremiumPipeline         CorrectionLoop
-            (DEEP-SUBPRIME)        (SUPER-PRIME)         (LoopAgent, ≤3x)
-            rehabilitation         fast-track               │         │
-            plan, no offer         no retry             CampaignVariants  ComplianceGate
-                                   PremiumCampaign      (ParallelAgent)   (exit_loop)
-                                   PremiumCompliance    3 tones A/B/C
-                                                        CampaignEvaluator
-                                                        (LLM-as-Judge)
-                                                              │
-                                                       ConditionalAgent
-                                                       (SUBPRIME ineligible)
-                                                       gap analysis
-                                          │
-                              ExplainabilityAgent
-                              (customer-facing explanation)
+FinCampaignPipeline (SequentialAgent)                                ROOT
+├── RiskAnalystAgent        LlmAgent   → risk_assessment + preload_memory
+├── FinCampaignOrchestrator LlmAgent   → transfer_to_agent (LLM decides route)
+│    ├── EducationalAgent   LlmAgent   DEEP-SUBPRIME  → rehabilitation plan
+│    ├── PremiumPipeline    Sequential SUPER-PRIME    → fast-track (no retry)
+│    │   ├── PremiumCampaignAgent
+│    │   └── PremiumComplianceAgent
+│    ├── ConditionalAgent   LlmAgent   SUBPRIME ineligible → gap analysis
+│    └── CorrectionLoop     LoopAgent  max_iterations=3
+│        ├── CampaignVariantStep  Sequential
+│        │   ├── CampaignVariants  ParallelAgent   fan-out: 3 tones
+│        │   │   ├── FormalCampaignAgent    → campaign_formal
+│        │   │   ├── FriendlyCampaignAgent  → campaign_friendly
+│        │   │   └── UrgentCampaignAgent    → campaign_urgent
+│        │   └── CampaignEvaluatorAgent     fan-in: LLM-as-Judge → campaign
+│        ├── QualityGateAgent     LlmAgent   score 1–10 → quality_result  [C1]
+│        └── ComplianceGateAgent  LlmAgent   regulatory check + exit_loop
+└── ExplainabilityAgent     LlmAgent   → customer-facing explanation (Spanish)
 ```
 
-**13 agents** — LlmAgent + SequentialAgent + LoopAgent + ParallelAgent
+**14 agents** — LlmAgent + SequentialAgent + LoopAgent + ParallelAgent
 
 ### Pipeline Routes
 
@@ -51,13 +46,17 @@ The system receives a customer credit profile, routes it through a hierarchy of 
 
 | Feature | Implementation |
 |---------|---------------|
-| **Dynamic routing** | Orchestrator reads risk segment → transfers to correct pipeline |
-| **Auto-correction loop** | ComplianceGate rejects → CampaignGenerator rewrites (≤3x) |
-| **Parallel A/B/C variants** | ParallelAgent generates 3 tones simultaneously |
-| **LLM-as-Judge** | CampaignEvaluator selects best variant before compliance |
-| **Persistent memory** | Per-customer interaction log + aggregated memory card (PostgreSQL) |
-| **RAG pre-injection** | KB context injected at instruction-build time — no tool call latency |
-| **Confidence scoring** | Risk + compliance self-report confidence → auto-escalate at < 0.65 |
+| **Dynamic routing** | Orchestrator LLM reads risk_assessment → `transfer_to_agent()` — no if/elif |
+| **Auto-correction loop** | ComplianceGate rejects → CampaignVariants rewrites (≤3x) |
+| **Quality gate** | QualityGateAgent scores campaign 1–10 (clarity, CTA, tone, relevance) before compliance — below 7 triggers regeneration |
+| **Model routing** | Borderline cases (DTI 43–53% or confidence < 0.65) auto-upgrade to Gemini 2.5 Pro via `before_model_callback` |
+| **Parallel A/B/C variants** | ParallelAgent generates 3 tones simultaneously (fan-out) |
+| **LLM-as-Judge** | CampaignEvaluator selects best variant (fan-in) before quality + compliance |
+| **Lifecycle callbacks** | Structured JSON logs per agent: `risk_assessment_complete`, `routing_decision`, `ab_variant_selected`, `quality_verdict`, `compliance_verdict`, `pipeline_complete` |
+| **Guardrails** | `before_agent_callback` on QualityGate + ComplianceGate — short-circuit on missing state |
+| **Persistent memory** | `preload_memory` (PreloadMemoryTool) auto-injects customer history before each assessment |
+| **RAG pre-injection** | KB context injected at instruction-build time — no tool call round-trip |
+| **Confidence scoring** | Risk + compliance self-report → auto-escalate `human_review_required` at < 0.65 |
 | **Human-in-the-loop** | `PATCH /campaigns/:id/results/:rid/review` + ReviewActions UI |
 | **Explainability** | ExplainabilityAgent generates customer-facing justification in Spanish |
 | **Eval suite** | `adk eval` — 7 cases across 2 evalsets, response_match_score ≥ 0.4 |
@@ -69,7 +68,8 @@ The system receives a customer credit profile, routes it through a hierarchy of 
 | Layer | Technology | Version |
 |-------|-----------|---------|
 | **Agent Framework** | Google ADK | 1.27.2 |
-| **LLM** | Gemini 2.5 Flash Lite (Vertex AI) | — |
+| **LLM (standard)** | Gemini 2.5 Flash Lite (Vertex AI) | — |
+| **LLM (borderline escalation)** | Gemini 2.5 Pro (auto-routed via B5) | — |
 | **RAG** | Vertex AI Search (Discovery Engine) | — |
 | **Auth** | Self-signed JWT (google-auth) | 2.49.1 |
 | **Backend** | FastAPI + asyncpg | 0.135.1 / 0.31.0 |
@@ -92,19 +92,20 @@ FinCampaign/
 │   ├── main.py                    FastAPI app — all REST endpoints
 │   ├── agents_adk/                Google ADK multi-agent system
 │   │   ├── fincampaign_pipeline.py  Root SequentialAgent
-│   │   ├── orchestrator.py          Dynamic routing orchestrator
-│   │   ├── risk_analyst.py          Segment + DTI + eligibility
+│   │   ├── orchestrator.py          Dynamic routing orchestrator (LLM-driven)
+│   │   ├── risk_analyst.py          Segment + DTI + eligibility + preload_memory
 │   │   ├── premium_pipeline.py      SUPER-PRIME fast-track
-│   │   ├── correction_loop.py       LoopAgent with auto-correction
-│   │   ├── campaign_generator.py    Campaign generation
-│   │   ├── campaign_variants.py     ParallelAgent — 3 tones
-│   │   ├── campaign_evaluator.py    LLM-as-Judge
+│   │   ├── correction_loop.py       LoopAgent (variants → quality → compliance)
+│   │   ├── campaign_variants.py     ParallelAgent — 3 tones + quality feedback
+│   │   ├── campaign_evaluator.py    LLM-as-Judge (fan-in)
+│   │   ├── quality_gate.py          Pre-compliance quality scorer 1–10  [C1]
 │   │   ├── compliance_gate.py       Compliance check + exit_loop
+│   │   ├── callbacks.py             Lifecycle callbacks: logging + guardrails + B5 routing
 │   │   ├── conditional_agent.py     SUBPRIME gap analysis
 │   │   ├── educational_agent.py     DEEP-SUBPRIME rehabilitation
 │   │   ├── explainability_agent.py  Customer-facing explanation
 │   │   ├── search_tool.py           RAG via Discovery Engine REST + JWT
-│   │   ├── memory_service.py        Customer memory card builder
+│   │   ├── memory_service.py        InMemory / VertexAI memory backend
 │   │   └── agent.py                 adk eval entry point
 │   ├── eval_agent/                ADK eval wrapper
 │   │   ├── __init__.py              importlib loader (adk eval compat)
@@ -143,7 +144,9 @@ FinCampaign/
 │   ├── migrate_add_intent.py        campaign_intent field
 │   └── migrate_lookup_values.py     Seed lookup tables
 └── data/
-    └── customers_test_100.csv       100 test customers (5 segments)
+    ├── customers_test_100.csv       100 test customers (5 segments)
+    ├── customers_200.csv            200 test customers for mass campaign testing
+    └── generate_customers_200.py    Generator script (seeded, reproducible)
 ```
 
 ---
@@ -170,6 +173,25 @@ customer_interactions -- id, customer_id, campaign_id, segment, verdict,
 customer_memory      -- customer_id (unique), segment_trend, products_offered,
                      --   verdict_counts (JSON), dti_trend, last_updated
 ```
+
+---
+
+## Observability & Callbacks
+
+All agents emit structured JSON log events via `logging.getLogger("fincampaign.adk")`:
+
+| Event | Trigger | Key fields |
+|-------|---------|-----------|
+| `risk_assessment_complete` | after RiskAnalystAgent | segment, risk_level, dti, confidence |
+| `routing_decision` | after FinCampaignOrchestrator | segment, eligible, route |
+| `ab_variant_selected` | after CampaignEvaluatorAgent | variants_generated, chosen_preview |
+| `quality_verdict` | after QualityGateAgent | quality_score, clarity, cta_strength, tone_fit, passed |
+| `compliance_verdict` | after ComplianceGateAgent | fair_lending, apr_disclosure, overall_verdict, confidence |
+| `model_upgraded` | before model call (B5) | from_model, to_model, dti, confidence, reason |
+| `compliance_skipped_quality_failed` | before ComplianceGate (guardrail) | quality_score |
+| `pipeline_complete` | after ExplainabilityAgent | segment, final_verdict, human_review |
+
+Filter by event: `jq 'select(.event=="model_upgraded")'`
 
 ---
 

@@ -1,0 +1,201 @@
+id_number,name,age,monthly_income,monthly_debt,credit_score,late_payments,credit_utilization,products_of_interest,existing_products
+1000000159,Mauricio Martínez Medina,25,4623.53,1664.54,605,2,68.2,vehiculo,
+1000000189,Felipe Moreno Ortega,38,1430.46,875.92,559,8,89.5,credito personal,
+1000000034,Mateo Niño Núñez,33,7388.61,1188.6,740,0,20.0,hipotecario,credito personal
+1000000142,Camila Vega Torres,29,4491.3,2156.58,622,2,44.5,tarjeta de credito,credito personal
+1000000192,Sara Castaño Mendoza,50,3185.6,1828.79,563,4,92.8,credito personal,credito personal
+1000000067,Ramón Ruiz Cruz,53,6578.44,1013.14,717,0,18.4,vehiculo,
+1000000057,Fernando Martínez Aguilar,54,7885.14,1463.08,727,1,31.7,vehiculo,"tarjeta de credito, credito personal"
+1000000160,Ricardo Pérez Montoya,43,3266.88,1248.84,603,4,74.8,vehiculo,
+1000000076,Ramón Vargas González,25,3127.48,670.46,680,1,22.6,tarjeta de credito,tarjeta de credito
+1000000020,Paula Acosta Medina,64,8856.06,1627.7,825,0,15.8,"vehiculo, tarjeta de credito",cdt
+1000000027,Verónica Sánchez Ávila,32,6682.55,1012.85,780,0,6.4,"hipotecario, tarjeta de credito",hipotecario
+1000000176,Gloria Ortega Aguilar,22,2473.25,1577.12,504,8,69.9,tarjeta de credito,credito personal
+1000000003,Claudia Gutiérrez Jiménez,28,11034.24,1543.05,829,0,21.2,vehiculo,tarjeta de credito
+1000000080,Santiago Salazar Reyes,40,5765.96,1522.66,694,0,30.1,"vehiculo, tarjeta de credito","credito personal, tarjeta de credito"
+1000000153,Alejandro Pérez Cardona,28,5319.33,1995.71,611,4,42.7,vehiculo,
+1000000004,Gustavo Castro López,34,8583.77,1739.92,779,0,6.9,hipotecario,"vehiculo, tarjeta de credito"
+1000000079,Andrés Medina Núñez,57,3660.64,1264.0,690,0,28.4,vehiculo,tarjeta de credito
+1000000122,Nicolás Castaño Pérez,50,2269.01,890.84,603,1,64.8,credito personal,tarjeta de credito
+1000000169,Sofía Cardona Aguilar,32,5291.34,1630.45,649,2,36.8,tarjeta de credito,tarjeta de credito
+1000000078,Sebastián Moreno Díaz,25,7230.92,3021.13,669,1,39.9,tarjeta de credito,
+1000000127,Santiago González González,29,2151.82,847.58,646,3,50.0,vehiculo,
+1000000125,Nicolás Vega Suárez,53,2266.91,991.43,604,3,50.2,tarjeta de credito,
+1000000184,Julián Rojas Quintero,36,1690.72,772.13,519,6,68.8,credito personal,
+1000000010,Ana María Reyes Ramírez,55,8959.53,1453.9,777,0,19.9,"vehiculo, tarjeta de credito",cdt
+1000000103,Fernando Flores Hernández,51,3896.88,998.27,690,0,51.5,vehiculo,
+1000000136,Andrés Díaz Vargas,45,4310.4,1754.59,643,3,36.8,tarjeta de credito,
+1000000197,Esperanza Niño Vargas,38,2088.17,1278.36,566,5,68.1,tarjeta de credito,
+1000000163,Marcela Hernández Sánchez,46,4671.84,1645.8,607,1,36.9,vehiculo,credito personal
+1000000095,Diego Cifuentes Medina,37,6695.8,1894.82,685,1,50.4,tarjeta de credito,"credito personal, tarjeta de credito"
+1000000087,Carlos Ríos González,47,7217.53,1967.19,656,2,37.3,hipotecario,vehiculo
+1000000130,Ana María Sánchez Moreno,26,3677.43,1228.41,636,4,44.0,tarjeta de credito,credito personal
+1000000134,Natalia Núñez Cruz,23,4006.03,1980.32,636,2,41.3,vehiculo,
+1000000188,Esteban Medina Acosta,22,1536.68,1048.9,561,9,66.9,credito personal,credito personal
+1000000175,Ana María Silva Ávila,22,1315.97,540.73,586,10,56.4,tarjeta de credito,
+1000000031,Gloria García Cruz,44,5954.28,968.74,756,1,35.0,"vehiculo, tarjeta de credito","vehiculo, tarjeta de credito"
+1000000009,Marcela Torres Castro,59,8531.79,2035.53,768,0,9.3,"hipotecario, vehiculo",tarjeta de credito
+1000000104,Marcela Vargas Gómez,49,7698.8,3212.58,678,1,42.4,"vehiculo, tarjeta de credito",
+1000000119,Sara Reyes Gutiérrez,57,3839.63,874.3,671,2,27.2,tarjeta de credito,vehiculo
+1000000049,Gloria Ríos Rodríguez,39,5180.57,1301.76,715,0,33.4,vehiculo,"vehiculo, tarjeta de credito"
+1000000006,Natalia Ríos Rojas,42,6834.66,1245.63,850,0,24.7,hipotecario,cdt
+1000000107,Nathalia Cruz Salazar,38,5838.86,1620.35,664,2,26.7,"vehiculo, tarjeta de credito",
+1000000033,Jorge Rodríguez González,41,6178.79,1440.04,709,1,16.1,"vehiculo, tarjeta de credito",
+1000000191,Patricia Cardona Ríos,38,3146.83,1719.26,549,5,87.5,tarjeta de credito,credito personal
+1000000101,Gabriel Ávila Salazar,31,4284.06,909.7,652,1,33.1,tarjeta de credito,vehiculo
+1000000041,Jorge López Pérez,41,8289.73,2541.9,753,0,36.3,vehiculo,"tarjeta de credito, credito personal"
+1000000040,Nicolás Aguilar Salazar,42,5545.04,954.95,742,0,39.0,tarjeta de credito,"vehiculo, tarjeta de credito"
+1000000056,Patricia Reyes Jiménez,59,10827.58,3353.89,724,1,26.1,"vehiculo, tarjeta de credito",vehiculo
+1000000199,Diego Barrera Rodríguez,34,3447.73,2083.45,514,3,78.9,tarjeta de credito,tarjeta de credito
+1000000044,Alejandro Quintero Ramírez,45,4997.0,1489.16,754,1,30.0,"hipotecario, vehiculo","vehiculo, tarjeta de credito"
+1000000115,Ximena Barrera Torres,56,4637.55,1306.04,658,2,44.4,hipotecario,vehiculo
+1000000019,Carlos Gutiérrez Hernández,31,6252.41,1005.29,803,0,5.1,vehiculo,"tarjeta de credito, cdt"
+1000000093,Natalia García Romero,48,5295.32,2083.45,688,0,29.7,vehiculo,vehiculo
+1000000063,Arturo Rojas Morales,37,9418.78,2927.34,736,1,38.2,hipotecario,"tarjeta de credito, credito personal"
+1000000048,David Bernal Aguilar,37,4369.71,1382.86,701,0,23.7,hipotecario,"vehiculo, tarjeta de credito"
+1000000109,Ana María Ospina Cardona,30,7502.95,2039.89,655,1,26.1,hipotecario,vehiculo
+1000000094,Iván Mendoza Gutiérrez,31,4142.06,1363.26,696,2,37.1,hipotecario,vehiculo
+1000000046,Nicolás Acosta Niño,53,7439.11,1693.12,713,1,23.9,hipotecario,vehiculo
+1000000017,Oscar Barrera Cano,55,11703.39,1872.08,844,0,15.6,vehiculo,
+1000000146,Iván Cardona Torres,32,3998.1,1537.61,639,1,53.0,tarjeta de credito,credito personal
+1000000180,Julián Ramírez Morales,50,3113.54,2021.1,538,5,86.7,tarjeta de credito,
+1000000047,Diego Gómez Torres,40,9270.81,1505.89,710,1,12.8,hipotecario,credito personal
+1000000141,Julián Cifuentes Mendoza,27,2619.82,1235.0,621,1,55.4,tarjeta de credito,credito personal
+1000000022,Felipe Suárez Rivera,40,6727.35,1316.16,772,0,10.0,"vehiculo, tarjeta de credito",cdt
+1000000015,Ana María Vargas Morales,59,12472.55,2565.92,780,0,17.0,hipotecario,"tarjeta de credito, cdt"
+1000000025,Patricia Torres Gómez,63,17823.71,1836.57,760,0,10.7,"hipotecario, tarjeta de credito",tarjeta de credito
+1000000035,Ana María Castaño Quintero,34,9645.34,2154.76,735,0,12.3,"vehiculo, tarjeta de credito",tarjeta de credito
+1000000060,Julián Martínez Ruiz,27,4416.68,1366.62,734,0,29.5,hipotecario,vehiculo
+1000000065,Hernán Ríos Montoya,31,8047.69,1408.92,704,1,34.7,"hipotecario, vehiculo",credito personal
+1000000110,Daniela Ríos Hernández,40,7067.6,1813.08,667,1,53.9,"vehiculo, tarjeta de credito",
+1000000096,Felipe Cardona Castaño,31,4249.97,1292.22,652,1,33.5,hipotecario,credito personal
+1000000178,Daniela Ramírez Hernández,36,2914.91,1884.24,533,6,94.9,credito personal,credito personal
+1000000131,Natalia Cano Moreno,37,3924.17,1874.14,617,1,59.4,tarjeta de credito,credito personal
+1000000059,Iván Martínez Niño,51,7637.59,1330.85,713,1,18.3,tarjeta de credito,tarjeta de credito
+1000000100,Arturo Vargas Martínez,28,7985.84,2909.15,668,1,54.2,hipotecario,tarjeta de credito
+1000000166,María Mendoza Hernández,43,1875.24,922.87,635,1,60.4,tarjeta de credito,
+1000000014,Isabella Ortega Moreno,60,12092.18,861.96,782,0,21.8,"vehiculo, tarjeta de credito",hipotecario
+1000000073,Alejandro Reyes Ortega,28,5163.09,1855.66,697,2,40.9,hipotecario,tarjeta de credito
+1000000196,Luz Gutiérrez Acosta,20,1275.1,778.91,596,9,75.0,credito personal,credito personal
+1000000002,Luz Muñoz Cano,29,6381.39,438.65,814,0,15.1,"vehiculo, tarjeta de credito",hipotecario
+1000000085,Paola Núñez Jiménez,33,6197.55,1606.98,698,0,46.7,hipotecario,vehiculo
+1000000162,Gustavo Ospina Suárez,29,4076.79,2035.49,628,1,45.2,tarjeta de credito,
+1000000024,Laura Flores Silva,58,17116.4,3761.14,771,0,13.1,vehiculo,cdt
+1000000164,Esperanza Mendoza Morales,38,4007.93,1216.87,631,2,63.7,credito personal,
+1000000051,Ximena Acosta Núñez,60,11131.41,2613.47,748,1,34.9,"hipotecario, vehiculo",vehiculo
+1000000138,Marcela Hernández Ramos,22,3770.55,1322.05,624,3,37.9,credito personal,
+1000000112,Hernán Ortega Pérez,38,3954.52,898.43,650,1,43.5,tarjeta de credito,"credito personal, tarjeta de credito"
+1000000167,Mauricio Pardo Gutiérrez,41,2692.17,1196.84,622,1,65.9,vehiculo,
+1000000023,Paola Pardo García,63,11551.54,2597.91,795,0,13.9,hipotecario,"tarjeta de credito, cdt"
+1000000200,Arturo Sánchez Gómez,33,2149.17,1254.0,574,9,60.9,credito personal,tarjeta de credito
+1000000069,Oscar Morales Cano,51,11040.86,2454.1,744,0,12.6,"hipotecario, vehiculo","tarjeta de credito, credito personal"
+1000000120,Jorge Rivera Sánchez,31,3311.55,1318.38,699,0,29.7,tarjeta de credito,vehiculo
+1000000148,Nathalia Gutiérrez Salazar,38,3419.71,1356.51,645,2,49.6,credito personal,
+1000000145,Santiago Muñoz González,23,3102.19,981.29,603,4,53.1,tarjeta de credito,tarjeta de credito
+1000000012,Daniela Salazar Pardo,28,13150.66,1888.57,808,0,24.4,"hipotecario, tarjeta de credito",tarjeta de credito
+1000000008,Ricardo Aguilar Jiménez,31,7960.83,1002.2,791,0,18.7,vehiculo,"tarjeta de credito, cdt"
+1000000083,Esteban González Vega,54,5077.84,1355.28,657,1,53.0,tarjeta de credito,"credito personal, tarjeta de credito"
+1000000111,Ana María González Aguilar,47,6647.83,1659.53,659,2,45.3,hipotecario,vehiculo
+1000000042,Ramón Gómez Castro,57,7476.51,1945.99,738,1,23.1,hipotecario,
+1000000037,Camila Medina Martínez,34,6829.43,1524.15,706,1,39.2,vehiculo,vehiculo
+1000000194,Alejandro Hernández Silva,30,2886.03,1524.05,546,9,57.0,credito personal,tarjeta de credito
+1000000026,Iván Cardona Ospina,31,8612.41,531.36,797,0,20.0,hipotecario,
+1000000105,Alejandro Martínez Cruz,58,7193.35,1607.45,674,1,40.0,vehiculo,
+1000000128,Adriana Quintero Gutiérrez,55,3397.94,1576.0,605,3,67.5,tarjeta de credito,credito personal
+1000000173,Mauricio Núñez López,45,1166.75,600.61,541,7,67.3,tarjeta de credito,
+1000000186,Paola Cifuentes Ávila,19,2773.65,1696.92,579,3,88.0,credito personal,
+1000000117,Mauricio Rodríguez Aguilar,45,7728.05,3000.02,678,0,54.3,tarjeta de credito,
+1000000139,Mateo Ruiz Ríos,45,3388.35,1317.98,636,4,46.6,tarjeta de credito,tarjeta de credito
+1000000151,Felipe Cruz Cano,44,2277.12,1038.24,625,1,47.4,vehiculo,tarjeta de credito
+1000000001,Fernando González Castaño,34,7335.97,1454.8,841,0,9.5,"hipotecario, tarjeta de credito",tarjeta de credito
+1000000018,Paula Reyes Hernández,61,14555.39,1889.27,785,0,13.8,"hipotecario, vehiculo","tarjeta de credito, cdt"
+1000000099,Paula Rojas Salazar,24,7747.77,2617.94,674,1,50.5,tarjeta de credito,credito personal
+1000000172,Camila Pardo Romero,23,3303.21,1921.63,547,4,84.1,credito personal,tarjeta de credito
+1000000174,Ana María Cardona Niño,21,3162.1,1655.03,593,9,66.0,credito personal,
+1000000061,Jorge Cifuentes Ortega,38,5908.36,1206.39,709,0,26.9,"hipotecario, vehiculo","vehiculo, tarjeta de credito"
+1000000092,Isabella Silva Gómez,37,6379.76,1859.11,682,1,54.3,hipotecario,vehiculo
+1000000043,Esperanza Ramos Cruz,29,9670.28,970.63,702,0,20.9,hipotecario,credito personal
+1000000193,Felipe Castro Barrera,18,1031.41,591.22,506,10,66.4,credito personal,
+1000000013,Pedro Castro Cardona,57,15223.18,1796.87,794,0,13.7,hipotecario,tarjeta de credito
+1000000156,Julián Ortega Salazar,35,4059.2,1889.66,628,4,44.4,tarjeta de credito,
+1000000030,Felipe Mendoza Hernández,41,13453.91,2187.59,818,0,6.5,"vehiculo, tarjeta de credito","vehiculo, tarjeta de credito"
+1000000155,Mónica Barrera Morales,22,4653.06,2224.11,644,2,63.8,credito personal,tarjeta de credito
+1000000029,Oscar Hernández García,47,14594.3,1426.41,845,0,7.6,"hipotecario, vehiculo","vehiculo, tarjeta de credito"
+1000000168,Felipe Hernández Montoya,50,2447.83,1153.93,641,4,74.2,vehiculo,credito personal
+1000000116,Ana María Díaz Núñez,39,6102.07,2339.61,676,2,34.3,vehiculo,
+1000000086,Lucía Ramos Cruz,52,7983.2,2362.19,661,1,53.9,vehiculo,"credito personal, tarjeta de credito"
+1000000007,Mateo Pardo Barrera,32,7951.85,962.6,806,0,19.0,"vehiculo, tarjeta de credito",tarjeta de credito
+1000000149,David Romero Castro,26,1993.75,874.85,638,3,37.6,tarjeta de credito,
+1000000062,Liliana Martínez Vargas,35,8847.14,2760.5,710,0,33.3,tarjeta de credito,tarjeta de credito
+1000000028,Ricardo Castro Díaz,65,12947.03,750.26,791,0,13.4,"vehiculo, tarjeta de credito",
+1000000185,Isabella Flores Cruz,28,1225.44,620.06,535,4,75.1,tarjeta de credito,tarjeta de credito
+1000000132,Ximena Rojas Martínez,45,5209.69,1965.23,619,2,69.8,tarjeta de credito,credito personal
+1000000070,Paula Vargas Cruz,39,9167.22,1906.6,730,0,12.8,"hipotecario, vehiculo","vehiculo, tarjeta de credito"
+1000000052,Paula Jiménez Núñez,58,10014.21,2851.74,716,1,33.0,"hipotecario, vehiculo","vehiculo, tarjeta de credito"
+1000000055,Mauricio Vargas Moreno,49,11238.71,2568.02,724,0,35.7,"hipotecario, vehiculo",tarjeta de credito
+1000000154,Isabella Flores Rivera,28,3797.15,1756.19,649,1,61.5,tarjeta de credito,
+1000000066,Claudia Barrera Castaño,59,7483.9,1956.55,709,1,28.5,"hipotecario, vehiculo",
+1000000114,Sebastián Morales Pardo,41,6070.82,1369.99,669,0,53.1,hipotecario,credito personal
+1000000152,María Ortega Vargas,47,5489.51,2748.81,647,1,60.8,tarjeta de credito,tarjeta de credito
+1000000021,Mónica Muñoz Muñoz,57,7131.91,1296.56,784,0,13.5,"hipotecario, tarjeta de credito","tarjeta de credito, cdt"
+1000000150,Paola Cano Cruz,29,4950.8,2535.65,646,2,48.3,tarjeta de credito,tarjeta de credito
+1000000011,Gustavo Hernández Silva,38,11922.19,2398.23,825,0,8.1,"hipotecario, tarjeta de credito",cdt
+1000000075,Camila Rodríguez Castro,52,5199.83,2038.32,698,2,30.0,hipotecario,
+1000000038,Arturo Pérez Silva,40,9892.52,1712.21,711,1,34.1,tarjeta de credito,vehiculo
+1000000089,Adriana Ramírez Romero,25,5351.42,1803.32,662,1,41.9,tarjeta de credito,
+1000000102,Isabella Reyes Ríos,37,3434.91,746.66,661,1,41.7,hipotecario,vehiculo
+1000000098,Lucía Salazar Pardo,47,2911.56,1082.91,659,1,31.8,"vehiculo, tarjeta de credito",credito personal
+1000000171,Patricia Cano Bernal,42,2036.07,1099.49,547,10,90.8,credito personal,credito personal
+1000000147,Camila López Morales,25,3466.94,1658.63,603,3,74.3,tarjeta de credito,
+1000000032,Sebastián Niño Quintero,33,8436.82,2573.11,752,0,38.2,tarjeta de credito,tarjeta de credito
+1000000158,Gloria Sánchez Romero,55,5030.11,1566.78,608,4,70.0,tarjeta de credito,
+1000000071,Arturo Ríos Jiménez,57,4529.61,1457.47,687,1,34.9,vehiculo,
+1000000182,Paola Hernández Núñez,22,2769.06,1617.11,591,9,87.9,tarjeta de credito,
+1000000090,Sofía Quintero García,37,7344.66,2252.14,678,0,54.1,"vehiculo, tarjeta de credito",tarjeta de credito
+1000000179,Adriana Pardo Romero,38,1348.91,876.36,557,4,87.4,credito personal,
+1000000082,Ramón Romero Núñez,41,7496.26,2862.51,659,0,22.1,tarjeta de credito,
+1000000126,Marcela Aguilar Medina,34,4734.46,1539.51,606,2,52.2,credito personal,tarjeta de credito
+1000000183,Laura Sánchez Ospina,26,2668.28,1389.05,559,5,85.7,credito personal,tarjeta de credito
+1000000074,Arturo Ramírez Rojas,25,4162.47,1480.86,661,0,29.6,tarjeta de credito,
+1000000161,Oscar Montoya Acosta,50,3040.57,1009.87,641,1,46.5,vehiculo,credito personal
+1000000058,Jorge Silva Ramos,54,8515.14,902.29,737,1,14.1,vehiculo,tarjeta de credito
+1000000077,David Núñez Núñez,36,3151.48,1160.3,665,2,40.9,hipotecario,vehiculo
+1000000143,Paola Rojas Ruiz,48,4608.86,1459.06,648,4,53.6,vehiculo,credito personal
+1000000072,Camila Gómez Díaz,56,3882.72,879.61,669,0,31.0,hipotecario,
+1000000064,Claudia Cruz Ortega,27,9577.54,1593.21,706,0,33.9,tarjeta de credito,"tarjeta de credito, credito personal"
+1000000050,Adriana Vega Ramos,54,5993.59,1717.97,735,1,14.0,hipotecario,"tarjeta de credito, credito personal"
+1000000124,Ricardo Vega Torres,48,4935.0,1943.31,630,1,54.6,tarjeta de credito,
+1000000190,Sebastián Rodríguez Romero,46,2360.29,1207.74,565,10,59.9,tarjeta de credito,credito personal
+1000000068,Lucía Jiménez Vega,38,6691.17,1396.76,724,1,15.5,tarjeta de credito,credito personal
+1000000165,Fernando Cardona Cardona,43,3341.3,1490.76,636,1,55.9,tarjeta de credito,credito personal
+1000000091,Patricia Montoya Romero,29,4743.95,1183.3,685,0,36.2,"vehiculo, tarjeta de credito",tarjeta de credito
+1000000140,Verónica Vargas Niño,45,5203.15,1661.83,644,1,44.7,tarjeta de credito,
+1000000088,Marcela Medina Rodríguez,22,3888.19,876.8,670,1,50.3,"vehiculo, tarjeta de credito",vehiculo
+1000000137,Claudia Rivera Ramírez,20,4639.19,2171.68,613,3,48.1,credito personal,
+1000000118,Gustavo Martínez Rodríguez,35,3543.95,804.03,667,1,23.2,"vehiculo, tarjeta de credito",
+1000000045,Andrés Vargas Romero,44,7363.57,2259.73,712,0,28.5,"hipotecario, vehiculo","tarjeta de credito, credito personal"
+1000000198,Ana María Gutiérrez Salazar,37,1774.57,1224.28,575,10,83.3,credito personal,
+1000000097,Isabella Medina Muñoz,51,7283.35,2857.42,671,1,23.5,vehiculo,
+1000000135,Claudia Sánchez Romero,52,3596.95,1428.89,627,3,43.6,tarjeta de credito,tarjeta de credito
+1000000123,Paola Martínez Rodríguez,53,3664.2,1861.38,628,1,64.1,tarjeta de credito,
+1000000170,Lucía Jiménez Sánchez,23,3551.58,1094.09,634,2,46.4,tarjeta de credito,
+1000000084,Ramón Castaño Martínez,27,7391.83,2672.87,652,2,28.8,tarjeta de credito,
+1000000144,Sofía Jiménez Castaño,50,4997.71,2188.94,620,2,52.6,credito personal,
+1000000054,Laura Díaz Medina,59,5222.44,768.06,744,1,22.2,"hipotecario, vehiculo",
+1000000133,Pedro Ramos Cifuentes,30,4560.61,1584.03,605,4,53.1,tarjeta de credito,tarjeta de credito
+1000000036,Mónica Morales Cruz,27,7438.29,812.28,709,1,37.0,tarjeta de credito,vehiculo
+1000000181,Santiago Vargas Aguilar,26,968.34,575.1,563,8,73.7,tarjeta de credito,
+1000000016,Nathalia Ramírez Ramírez,59,8890.46,1453.34,767,0,6.7,hipotecario,
+1000000187,Alejandro Muñoz Vargas,19,2592.94,1733.21,533,9,79.7,credito personal,tarjeta de credito
+1000000121,María Rivera Castro,35,5005.86,1646.91,642,3,66.6,tarjeta de credito,tarjeta de credito
+1000000157,Mateo Gómez Vega,52,5442.43,2185.51,636,3,66.1,tarjeta de credito,
+1000000129,Sofía Mendoza Pérez,23,2252.26,850.88,642,4,69.7,tarjeta de credito,credito personal
+1000000195,Lucía Quintero Ortega,24,2070.92,1226.92,564,4,60.1,credito personal,
+1000000053,Isabella Reyes Silva,59,9708.36,1471.68,704,1,19.6,hipotecario,vehiculo
+1000000177,David Quintero Sánchez,29,2588.86,1261.72,540,4,56.0,credito personal,tarjeta de credito
+1000000106,Patricia Romero Cifuentes,25,4009.64,1301.15,675,2,47.2,tarjeta de credito,
+1000000039,Diego Reyes Martínez,54,4309.8,877.27,755,0,34.5,tarjeta de credito,credito personal
+1000000108,Ana María Barrera Ramírez,50,5955.36,2374.69,658,2,21.4,vehiculo,vehiculo
+1000000081,Fernando Reyes Muñoz,34,6833.05,2306.24,666,2,48.1,hipotecario,credito personal
+1000000113,Hernán Ríos Cano,36,3786.02,778.05,693,2,31.5,"vehiculo, tarjeta de credito",credito personal
+1000000005,Ana María Ávila Gómez,46,12434.74,3041.83,818,0,6.6,"hipotecario, tarjeta de credito",

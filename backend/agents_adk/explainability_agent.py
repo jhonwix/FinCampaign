@@ -36,6 +36,7 @@ from google.adk.agents import LlmAgent  # noqa: E402
 from google.adk.agents.readonly_context import ReadonlyContext  # noqa: E402
 from google.adk.models import Gemini  # noqa: E402
 from google.genai import types  # noqa: E402
+from agents_adk.callbacks import log_pipeline_summary  # noqa: E402
 
 _MODEL = Gemini(
     model="gemini-2.5-flash-lite",
@@ -125,4 +126,5 @@ explainability_agent = LlmAgent(
     instruction=_explain_instruction,
     # No tools: reads purely from session.state — zero extra API calls
     output_key="explanation",
+    after_agent_callback=log_pipeline_summary,
 )

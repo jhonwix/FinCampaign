@@ -1,6 +1,6 @@
 """
-Correction Loop — ADK LoopAgent (E3 + C3)
-==========================================
+Correction Loop — ADK LoopAgent (E3 + C3 + C1)
+===============================================
 Replaces the manual while-loop correction in orchestrator.py.
 
 C3 upgrade: CampaignCorrectorAgent replaced by CampaignVariantStep:
@@ -12,18 +12,27 @@ C3 upgrade: CampaignCorrectorAgent replaced by CampaignVariantStep:
     └── CampaignEvaluatorAgent              ← fan-in: LLM-as-Judge picks best
                                               → campaign
 
+C1 upgrade: QualityGateAgent inserted before ComplianceGateAgent:
+  QualityGateAgent scores campaign 1-10 (clarity, CTA, tone, relevance).
+  If score < 7: guard_compliance_input callback injects a REJECTED compliance
+  result → loop iterates with quality feedback. ComplianceGate never called.
+  If score >= 7: ComplianceGateAgent runs normally.
+
 Agentic patterns demonstrated:
-  - Reflection / Self-Correction : LoopAgent auto-corrects on compliance rejection
+  - Reflection / Self-Correction : LoopAgent auto-corrects on quality or compliance rejection
   - Fan-out / Fan-in             : ParallelAgent + EvaluatorAgent for A/B selection
-  - LLM-as-Judge                 : EvaluatorAgent scores variants objectively
+  - LLM-as-Judge                 : EvaluatorAgent (C3) + QualityGateAgent (C1) score objectively
+  - Quality Gate                 : Pre-compliance quality threshold (C1)
 
 State flow per iteration:
   CampaignVariantStep
     → CampaignVariants (parallel) → campaign_formal, campaign_friendly, campaign_urgent
     → CampaignEvaluatorAgent      → campaign  (best of 3)
+  QualityGateAgent                → quality_result (score + feedback)
+    → if score < 7: guard_compliance_input injects REJECTED → loop continues
   ComplianceGateAgent             → compliance_result
     → if APPROVED: calls exit_loop → LoopAgent stops
-    → if REJECTED: loop continues, variants regenerate with compliance feedback
+    → if REJECTED: loop continues with combined quality+compliance feedback
 
 Loop termination:
   - ComplianceGateAgent calls exit_loop() → campaign approved
@@ -40,6 +49,7 @@ from google.adk.agents import LoopAgent, SequentialAgent  # noqa: E402
 
 from agents_adk.campaign_variants import campaign_variants    # noqa: E402
 from agents_adk.campaign_evaluator import campaign_evaluator  # noqa: E402
+from agents_adk.quality_gate import quality_gate              # noqa: E402
 from agents_adk.compliance_gate import compliance_gate        # noqa: E402
 
 # ── CampaignVariantStep ───────────────────────────────────────────────────────
@@ -63,13 +73,14 @@ campaign_variant_step = SequentialAgent(
 correction_loop = LoopAgent(
     name="CorrectionLoop",
     description=(
-        "Auto-correction loop with A/B variant selection. Each iteration: "
+        "Auto-correction loop with A/B variant selection and quality gate. Each iteration: "
         "generates 3 campaign tones in parallel, evaluates and selects the best, "
-        "then checks compliance. Exits when approved or after 3 attempts."
+        "scores quality 1-10, then checks compliance. Exits when approved or after 3 attempts."
     ),
     max_iterations=3,
     sub_agents=[
         campaign_variant_step,  # fan-out/fan-in → output_key="campaign"
+        quality_gate,           # C1: quality score 1-10 → output_key="quality_result"
         compliance_gate,        # check + exit_loop if approved → output_key="compliance_result"
     ],
 )

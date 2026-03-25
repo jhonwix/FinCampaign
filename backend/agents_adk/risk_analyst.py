@@ -42,6 +42,7 @@ from google.adk.agents.readonly_context import ReadonlyContext  # noqa: E402
 from google.adk.models import Gemini  # noqa: E402
 from google.adk.tools import preload_memory  # noqa: E402
 from agents_adk.search_tool import search_financial_kb  # noqa: E402
+from agents_adk.callbacks import log_risk_assessment  # noqa: E402
 from google.genai import types  # noqa: E402
 
 from config import settings  # noqa: E402
@@ -116,4 +117,5 @@ risk_analyst_agent = LlmAgent(
     # the LLM request — the model does NOT need to call it explicitly.
     tools=[preload_memory],
     output_key="risk_assessment",
+    after_agent_callback=log_risk_assessment,
 )

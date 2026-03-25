@@ -141,7 +141,7 @@ E8  (Deploy a Agent Engine, ~2h)
 |----|--------|------------------|--------|
 | B3 | **Gemini Streaming** — stream de tokens al frontend en tiempo real. Requiere `streamGenerateContent` + SSE en FastAPI. | Streaming API | ⬜ PENDING |
 | B4 | **Gemini Context Caching** — cachear system prompt + contexto RAG en Vertex AI por TTL. ~75% reducción en tokens de input para mismo segmento. | Context Caching API | ⬜ PENDING |
-| B5 | **Model Routing automático** — DTI borderline (43–53%) o confidence < 0.65 escalan a Gemini 2.5 Pro. Se configura por `model=` en cada `LlmAgent`. | Multi-model | ⬜ PENDING |
+| B5 | **Model Routing automático** — `before_model_callback` muta `llm_request.model` a `gemini-2.5-pro` cuando DTI 43–53% o confidence < 0.65. Aplicado a 6 agentes: FormalCampaign, FriendlyCampaign, UrgentCampaign, CampaignEvaluator, QualityGate, ComplianceGate. Log event: `model_upgraded`. | `before_model_callback` + `LlmRequest.model` mutation | ✅ DONE |
 | ~~B1~~ | ~~Gemini Function Calling~~ | — | ⏭ SKIPPED (E4) |
 | ~~B2~~ | ~~Google Search Grounding~~ | — | ⏭ SKIPPED (E6) |
 
@@ -154,7 +154,7 @@ E8  (Deploy a Agent Engine, ~2h)
 
 | ID | Mejora | ADK Pattern | Estado |
 |----|--------|------------|--------|
-| C1 | **Evaluator Agent** — 6to `LlmAgent` que puntúa la campaña (claridad, CTA, tono) score 1–10 antes de Compliance. Si score < 7 → `LoopAgent` regenera. | `LlmAgent` + `LoopAgent` condition | ⬜ PENDING |
+| C1 | **Quality Gate Agent** — `LlmAgent` que puntúa la campaña (claridad, CTA, tone-fit, offer_relevance) score 1–10 antes de Compliance. Si score < 7 → `guard_compliance_input` inyecta REJECTED → `LoopAgent` regenera con quality feedback. | `LlmAgent` + `before_agent_callback` guardrail | ✅ DONE |
 | C3 | **A/B Campaign Variants** — `ParallelAgent` lanza 3 `CampaignAgent` (tono formal / amigable / urgencia) en paralelo; `EvaluatorAgent` elige la mejor. | `ParallelAgent` + fan-in | ✅ DONE |
 | C4 | **Explainability Agent** — `LlmAgent` ligero genera explicación para el cliente final: por qué calificó, por qué ese producto. | `LlmAgent` en pipeline | ✅ DONE |
 | ~~C2~~ | ~~ReAct reasoning manual~~ | — | ⏭ SKIPPED (ADK nativo) |
@@ -205,3 +205,6 @@ E8  (Deploy a Agent Engine, ~2h)
 | 2026-03-19 | C3 | campaign_variants.py — ParallelAgent([FormalCampaignAgent, FriendlyCampaignAgent, UrgentCampaignAgent]). campaign_evaluator.py — LLM-as-Judge: scores 3 variants, writes best to output_key="campaign". correction_loop.py — reemplaza CampaignCorrectorAgent con CampaignVariantStep(SequentialAgent([variants, evaluator])). Patrones: fan-out/fan-in + LLM-as-Judge. |
 | 2026-03-19 | C4 | explainability_agent.py — LlmAgent sin tools (lee risk_assessment+campaign desde state). 4 escenarios: EDUCATIONAL (mejora crediticia), PREMIUM (perfil excelente), CONDITIONAL (brecha exacta), STANDARD (calificó). Output JSON: headline+body+next_steps+tone → output_key="explanation". fincampaign_pipeline.py — agregado como Step 3 final. |
 | 2026-03-19 | T1+T2+T3 | T1: run_adk.ps1 — lanza adk web con --session_service_uri sqlite:///./sessions.db (sesiones persistentes entre reinicios). T2: __init__.py — App(plugins=[ReflectAndRetryToolPlugin(max_retries=2), DebugLoggingPlugin()]). T3: risk_analyst.py — load_memory reemplazado por preload_memory (PreloadMemoryTool): inyección automática de historial del cliente sin llamada explícita. |
+| 2026-03-24 | Lifecycle Callbacks | callbacks.py — 6 callbacks (after_agent: log_risk_assessment, log_routing_decision, log_evaluator_selection, log_compliance_verdict, log_pipeline_summary; before_agent guardrail: guard_compliance_input). JSON logs vía logger "fincampaign.adk". |
+| 2026-03-24 | B5 | callbacks.py — route_to_pro_if_borderline (before_model_callback): muta llm_request.model a gemini-2.5-pro cuando DTI 43-53% o confidence < 0.65. Aplicado a 6 agentes del CorrectionLoop. Log event: model_upgraded. |
+| 2026-03-24 | C1 | quality_gate.py — QualityGateAgent (LlmAgent): puntúa campaña 1-10 en 4 dimensiones (clarity, cta_strength, tone_fit, offer_relevance). Insertado entre CampaignEvaluatorAgent y ComplianceGateAgent en CorrectionLoop. Si score < 7: guard_compliance_input inyecta REJECTED → loop regenera con quality feedback. campaign_variants.py extendido para leer quality_result en CORRECT mode. |

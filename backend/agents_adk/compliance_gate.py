@@ -22,6 +22,7 @@ from google.adk.agents.readonly_context import ReadonlyContext  # noqa: E402
 from google.adk.models import Gemini  # noqa: E402
 from google.adk.tools import exit_loop  # noqa: E402
 from agents_adk.search_tool import search_financial_kb  # noqa: E402
+from agents_adk.callbacks import guard_compliance_input, log_compliance_verdict, route_to_pro_if_borderline  # noqa: E402
 from google.genai import types  # noqa: E402
 
 _MODEL = Gemini(
@@ -105,4 +106,7 @@ compliance_gate = LlmAgent(
     # search_financial_kb pre-injected; exit_loop is an ADK loop-control primitive.
     tools=[exit_loop],
     output_key="compliance_result",
+    before_model_callback=route_to_pro_if_borderline,
+    before_agent_callback=guard_compliance_input,
+    after_agent_callback=log_compliance_verdict,
 )
